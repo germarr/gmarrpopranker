@@ -293,6 +293,7 @@
                     <p class="list-card__text">${item.comment}</p>
                     <div class="list-card__actions">
                         <button class="button button--ghost" onclick="updateRank(${item.id}, ${item.top_rank})">Update Rank</button>
+                        <button class="button button--ghost" onclick="updateComment(${item.id}, '${item.comment.replace(/'/g, "\\'")}')">Update Comment</button>
                         <button class="button button--danger" onclick="removeFromTop(${item.id})">Remove from List</button>
                     </div>
                 `;
@@ -303,13 +304,28 @@
         function updateRank(id, currentRank) {
             const newRank = prompt('New Rank:', currentRank);
             if (!newRank) return;
-            
+
             fetch(`/api/top`, { credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(all => {
                     const item = all.find(i => i.id === id);
                     if (item) {
                         const payload = { ...item, top_rank: Number(newRank) };
+                        saveItem(id, payload);
+                    }
+                });
+        }
+
+        function updateComment(id, currentComment) {
+            const newComment = prompt('New Comment:', currentComment);
+            if (newComment === null) return; // User cancelled
+
+            fetch(`/api/top`, { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(all => {
+                    const item = all.find(i => i.id === id);
+                    if (item) {
+                        const payload = { ...item, comment: newComment };
                         saveItem(id, payload);
                     }
                 });
