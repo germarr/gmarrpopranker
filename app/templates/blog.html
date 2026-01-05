@@ -39,7 +39,7 @@
                     </div>
                     <div class="blog-card-enhanced__content">
                         <div class="blog-card-enhanced__meta-top">
-                            <p class="blog-card__date">{{ post.created_at }}</p>
+                            <p class="blog-card__date">{{ post.created_at[:10] }}</p>
                             {% if post.score %}
                             <span class="score">{{ post.score }}/10</span>
                             {% endif %}
