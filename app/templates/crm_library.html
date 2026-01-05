@@ -459,6 +459,7 @@
             const titleInput = form.querySelector('input[name="title"]');
             const contentSelect = form.querySelector('select[name="content_type"]');
             const imageInput = form.querySelector('input[name="image_url"]');
+            const launchDateInput = form.querySelector('input[name="launch_date"]');
 
             const setHidden = (name, value) => {
                 const input = form.querySelector(`input[name="${name}"]`);
@@ -515,6 +516,9 @@
                         }
                         if (details.poster_url && imageInput) {
                             imageInput.value = details.poster_url;
+                        }
+                        if (launchDateInput && details.release_date) {
+                            launchDateInput.value = details.release_date;
                         }
                         setHidden('synopsis', details.synopsis);
                         setHidden('release_year', details.release_year);

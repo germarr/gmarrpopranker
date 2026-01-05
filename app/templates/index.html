@@ -57,14 +57,20 @@
                 </div>
                 <div class="top-row__scroll">
                     {% for item in want_to_watch_list %}
-                    <article class="top-card">
+                    {% set poster_image = (item.poster_url if item.poster_url else item.image_url) | default('', true) %}
+                    <article class="top-card top-card--vertical top-card--glass top-card--split" style="--poster-image: url('{{ poster_image }}');">
                         <div class="top-card__image">
-                            <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+                            <img src="{{ item.poster_url if item.poster_url else item.image_url }}" alt="{{ item.title }}" loading="lazy">
                         </div>
                         <div class="top-card__body">
                             <div class="top-card__header-row">
                                 <h3 class="top-card__title">{{ item.title }}</h3>
-                                <span class="tag tag--planned">{{ item.excitement }}/10</span>
+                                <div class="top-card__badges">
+                                    <span class="tag tag--planned">{{ item.excitement }}/10</span>
+                                    {% if item.content_type == "TV Series" and item.season %}
+                                    <span class="mini-badge">S{{ item.season }}</span>
+                                    {% endif %}
+                                </div>
                             </div>
                             <p class="top-card__meta">
                                 {{ item.content_type }}{% if item.content_type == "TV Series" and item.season %} · S{{ item.season }}{% endif %} · {{ item.launch_date }}
@@ -102,17 +108,23 @@
                 </div>
                 <div class="top-row__scroll">
                     {% for item in watched_list %}
-                    <article class="top-card">
+                    {% set poster_image = (item.poster_url if item.poster_url else item.image_url) | default('', true) %}
+                    <article class="top-card top-card--vertical top-card--glass top-card--split" style="--poster-image: url('{{ poster_image }}');">
                         <div class="top-card__image">
-                            <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+                            <img src="{{ item.poster_url if item.poster_url else item.image_url }}" alt="{{ item.title }}" loading="lazy">
                         </div>
                         <div class="top-card__body">
                             <div class="top-card__header-row">
                                 <h3 class="top-card__title">{{ item.title }}</h3>
-                                <span class="tag tag--watched">{{ item.score }}/10</span>
+                                <div class="top-card__badges">
+                                    <span class="tag tag--watched">{{ item.score }}/10</span>
+                                    {% if item.content_type == "TV Series" and item.season %}
+                                    <span class="mini-badge">S{{ item.season }}</span>
+                                    {% endif %}
+                                </div>
                             </div>
                             <p class="top-card__meta">
-                                {{ item.content_type }}{% if item.content_type == "TV Series" and item.season %} · S{{ item.season }}{% endif %} · {{ item.watch_date }}
+                                {{ item.content_type }}{% if item.content_type == "TV Series" and item.season %} · S{{ item.season }}{% endif %} · Watched: {{ item.watch_date }}{% if item.release_date %} · Released: {{ item.release_date }}{% endif %}
                             </p>
                             {% if item.release_year or item.runtime or item.genres %}
                             <p class="top-card__details">

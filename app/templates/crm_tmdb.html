@@ -361,7 +361,8 @@
             const excitement = prompt('Excitement (1-10):', '7');
             if (!excitement) return;
 
-            const launchDate = prompt('Launch date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+            const defaultDate = selectedMovie.release_date || new Date().toISOString().split('T')[0];
+            const launchDate = prompt('Launch date (YYYY-MM-DD):', defaultDate);
             if (!launchDate) return;
 
             log(`➕ Adding to want-to-watch: ${selectedMovie.title}`);

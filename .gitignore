@@ -17,3 +17,6 @@ app/.env
 test_*.py
 check_db.py
 TESTING.md
+
+# Database files
+app/data/app.db
