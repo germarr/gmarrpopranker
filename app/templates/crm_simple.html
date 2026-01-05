@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple CRM - Movie Ranker</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .debug-panel {
+            background: #f0f0f0;
+            border: 2px solid #333;
+            padding: 20px;
+            margin: 20px;
+            font-family: monospace;
+        }
+        .debug-log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <nav class="navbar">
+            <a href="/" class="navbar__logo">Movie Ranker</a>
+            <div class="navbar__links">
+                <a href="/" class="navbar__link">Home</a>
+                <a href="/blog" class="navbar__link">Blog</a>
+                <a href="/top" class="navbar__link">Top 25</a>
+                <a href="/crm" class="navbar__link">CRM</a>
+            </div>
+        </nav>
+        <header class="hero hero--compact">
+            <p class="hero__eyebrow">Simplified</p>
+            <h1 class="hero__title">Basic CRM Test</h1>
+            <p class="hero__subtitle">No TMDB, No Blog - Just Basic Forms</p>
+        </header>
+
+        <div class="debug-panel">
+            <h2>🔍 Debug Console</h2>
+            <p>This will show if JavaScript is working:</p>
+            <div id="debug-log" class="debug-log">Waiting for JavaScript to load...</div>
+        </div>
+
+        <main class="crm-grid">
+            <section class="panel">
+                <div class="panel__header">
+                    <h2>Add to Watched (Simple)</h2>
+                    <p>Basic form with minimal fields</p>
+                </div>
+                <form id="add-watched-form">
+                    <label class="field">
+                        <span>Title</span>
+                        <input type="text" name="title" placeholder="Movie title" required>
+                    </label>
+                    <label class="field">
+                        <span>Score (0-10)</span>
+                        <input type="number" name="score" placeholder="8" required min="0" max="10">
+                    </label>
+                    <label class="field field--full">
+                        <span>Comment</span>
+                        <textarea name="comment" placeholder="Your thoughts" required></textarea>
+                    </label>
+                    <label class="field">
+                        <span>Watch date</span>
+                        <input type="date" name="watch_date" required>
+                    </label>
+                    <label class="field">
+                        <span>Type</span>
+                        <select name="content_type" required>
+                            <option value="Movie">Movie</option>
+                            <option value="TV Series">TV Series</option>
+                        </select>
+                    </label>
+                    <label class="field field--full">
+                        <span>Image URL</span>
+                        <input type="text" name="image_url" placeholder="https://..." required>
+                    </label>
+                    <button type="submit" class="button">Add to watched</button>
+                </form>
+            </section>
+
+            <section class="panel">
+                <div class="panel__header">
+                    <h2>Add to Want to Watch (Simple)</h2>
+                    <p>Basic form with minimal fields</p>
+                </div>
+                <form id="add-want-to-watch-form">
+                    <label class="field">
+                        <span>Title</span>
+                        <input type="text" name="title" placeholder="Movie title" required>
+                    </label>
+                    <label class="field">
+                        <span>Launch date</span>
+                        <input type="date" name="launch_date" required>
+                    </label>
+                    <label class="field">
+                        <span>Excitement (1-10)</span>
+                        <input type="number" name="excitement" placeholder="7" min="1" max="10" required>
+                    </label>
+                    <label class="field">
+                        <span>Type</span>
+                        <select name="content_type" required>
+                            <option value="Movie">Movie</option>
+                            <option value="TV Series">TV Series</option>
+                        </select>
+                    </label>
+                    <label class="field field--full">
+                        <span>Image URL</span>
+                        <input type="text" name="image_url" placeholder="https://..." required>
+                    </label>
+                    <button type="submit" class="button button--ghost">Add to queue</button>
+                </form>
+            </section>
+        </main>
+
+        <section class="crm-lists">
+            <div class="panel">
+                <div class="panel__header">
+                    <h2>Watched list</h2>
+                    <p>Recent entries.</p>
+                </div>
+                <div id="watched-list" class="crm-list">Loading...</div>
+            </div>
+
+            <div class="panel">
+                <div class="panel__header">
+                    <h2>Want to watch list</h2>
+                    <p>Upcoming entries.</p>
+                </div>
+                <div id="want-to-watch-list" class="crm-list">Loading...</div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Debug logging function
+        function log(message) {
+            const debugLog = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.innerHTML += `\n[${timestamp}] ${message}`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(message);
+        }
+
+        log('🚀 JavaScript started loading...');
+        log('📍 Current URL: ' + window.location.href);
+
+        // Get DOM elements
+        const watchedListDiv = document.getElementById('watched-list');
+        const wantToWatchListDiv = document.getElementById('want-to-watch-list');
+        const watchedForm = document.getElementById('add-watched-form');
+        const wantToWatchForm = document.getElementById('add-want-to-watch-form');
+
+        log('🔍 Checking DOM elements...');
+        log('   watched-list: ' + (watchedListDiv ? 'FOUND' : 'NOT FOUND'));
+        log('   want-to-watch-list: ' + (wantToWatchListDiv ? 'FOUND' : 'NOT FOUND'));
+        log('   add-watched-form: ' + (watchedForm ? 'FOUND' : 'NOT FOUND'));
+        log('   add-want-to-watch-form: ' + (wantToWatchForm ? 'FOUND' : 'NOT FOUND'));
+
+        // Render lists function
+        function renderLists() {
+            log('📋 Fetching watched list...');
+            fetch('/api/watched', { credentials: 'same-origin' })
+                .then(response => {
+                    log('   Response status: ' + response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    log('   Received ' + data.length + ' watched items');
+                    watchedListDiv.innerHTML = '';
+                    if (data.length === 0) {
+                        watchedListDiv.innerHTML = '<div class="empty-state">No watched items yet.</div>';
+                        return;
+                    }
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'list-card';
+                        div.innerHTML = `
+                            <div class="list-card__header">
+                                <h3>${item.title}</h3>
+                                <span class="score">${item.score}/10</span>
+                            </div>
+                            <p class="list-card__text">${item.comment}</p>
+                            <p class="list-card__meta">${item.content_type} · ${item.watch_date}</p>
+                            <div class="list-card__actions" style="margin-top: 10px;">
+                                <button class="button button--ghost" onclick='editItem("watched", ${JSON.stringify(item)})'>Edit</button>
+                                <button class="button button--danger" onclick='deleteItem("watched", ${item.id})'>Delete</button>
+                            </div>
+                        `;
+                        watchedListDiv.appendChild(div);
+                    });
+                })
+                .catch(err => {
+                    log('❌ Error fetching watched: ' + err.message);
+                    watchedListDiv.innerHTML = '<div class="empty-state">Error loading watched items.</div>';
+                });
+
+            log('📋 Fetching want-to-watch list...');
+            fetch('/api/want-to-watch', { credentials: 'same-origin' })
+                .then(response => {
+                    log('   Response status: ' + response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    log('   Received ' + data.length + ' want-to-watch items');
+                    wantToWatchListDiv.innerHTML = '';
+                    if (data.length === 0) {
+                        wantToWatchListDiv.innerHTML = '<div class="empty-state">No items yet.</div>';
+                        return;
+                    }
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'list-card';
+                        div.innerHTML = `
+                            <div class="list-card__header">
+                                <h3>${item.title}</h3>
+                                <span class="badge">Planned</span>
+                            </div>
+                            <p class="list-card__text">Excitement ${item.excitement}/10</p>
+                            <p class="list-card__meta">${item.content_type} · ${item.launch_date}</p>
+                            <div class="list-card__actions" style="margin-top: 10px;">
+                                <button class="button button--ghost" onclick='editItem("want-to-watch", ${JSON.stringify(item)})'>Edit</button>
+                                <button class="button button--danger" onclick='deleteItem("want-to-watch", ${item.id})'>Delete</button>
+                            </div>
+                        `;
+                        wantToWatchListDiv.appendChild(div);
+                    });
+                })
+                .catch(err => {
+                    log('❌ Error fetching want-to-watch: ' + err.message);
+                    wantToWatchListDiv.innerHTML = '<div class="empty-state">Error loading items.</div>';
+                });
+        }
+
+        // Delete item function
+        window.deleteItem = function(list, id) {
+            if (!confirm('Are you sure you want to delete this item?')) {
+                return;
+            }
+            log(`🗑️ Deleting from ${list}: ${id}`);
+            fetch(`/api/${list}/${id}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Delete failed');
+                return response.json();
+            })
+            .then(() => {
+                log('   ✅ Item deleted');
+                renderLists();
+            })
+            .catch(err => {
+                log('   ❌ Error deleting: ' + err.message);
+                alert('Error deleting item: ' + err.message);
+            });
+        };
+
+        // Edit item function
+        window.editItem = function(list, item) {
+            log(`✏️ Editing item in ${list}: ${item.id}`);
+            
+            const title = prompt('Title', item.title);
+            if (title === null) return; // Cancelled
+
+            let payload = { ...item, title };
+
+            if (list === 'watched') {
+                const score = prompt('Score (0-10)', item.score);
+                if (score !== null) payload.score = Number(score);
+                
+                const comment = prompt('Comment', item.comment);
+                if (comment !== null) payload.comment = comment;
+
+                const watchDate = prompt('Watch date (YYYY-MM-DD)', item.watch_date);
+                if (watchDate !== null) payload.watch_date = watchDate;
+            } else {
+                const excitement = prompt('Excitement (1-10)', item.excitement);
+                if (excitement !== null) payload.excitement = Number(excitement);
+
+                const launchDate = prompt('Launch date (YYYY-MM-DD)', item.launch_date);
+                if (launchDate !== null) payload.launch_date = launchDate;
+            }
+
+            const imageUrl = prompt('Image URL', item.image_url);
+            if (imageUrl !== null) payload.image_url = imageUrl;
+
+            fetch(`/api/${list}/${item.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Update failed');
+                return response.json();
+            })
+            .then(() => {
+                log('   ✅ Item updated');
+                renderLists();
+            })
+            .catch(err => {
+                log('   ❌ Error updating: ' + err.message);
+                alert('Error updating item: ' + err.message);
+            });
+        };
+
+        // Attach watched form handler
+        log('🔗 Attaching event listener to watched form...');
+        if (watchedForm) {
+            watchedForm.addEventListener('submit', function(event) {
+                log('🎬 WATCHED FORM SUBMITTED!');
+                event.preventDefault();
+                log('   ✓ Default prevented');
+
+                const formData = new FormData(this);
+                log('   📦 FormData created');
+                log('      Title: ' + formData.get('title'));
+                log('      Score: ' + formData.get('score'));
+
+                log('   🚀 Sending POST to /api/watched...');
+                fetch('/api/watched', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    log('   📥 Response: ' + response.status + ' ' + response.statusText);
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.detail || 'Request failed');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    log('   ✅ SUCCESS! Item created with ID: ' + data.id);
+                    alert('✅ Watched item added!');
+                    watchedForm.reset();
+                    renderLists();
+                })
+                .catch(error => {
+                    log('   ❌ ERROR: ' + error.message);
+                    alert('❌ Error: ' + error.message);
+                });
+            });
+            log('   ✓ Watched form handler attached');
+        } else {
+            log('   ❌ Watched form not found!');
+        }
+
+        // Attach want-to-watch form handler
+        log('🔗 Attaching event listener to want-to-watch form...');
+        if (wantToWatchForm) {
+            wantToWatchForm.addEventListener('submit', function(event) {
+                log('📺 WANT-TO-WATCH FORM SUBMITTED!');
+                event.preventDefault();
+                log('   ✓ Default prevented');
+
+                const formData = new FormData(this);
+                log('   📦 FormData created');
+                log('      Title: ' + formData.get('title'));
+                log('      Excitement: ' + formData.get('excitement'));
+
+                log('   🚀 Sending POST to /api/want-to-watch...');
+                fetch('/api/want-to-watch', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    log('   📥 Response: ' + response.status + ' ' + response.statusText);
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.detail || 'Request failed');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    log('   ✅ SUCCESS! Item created with ID: ' + data.id);
+                    alert('✅ Want-to-watch item added!');
+                    wantToWatchForm.reset();
+                    renderLists();
+                })
+                .catch(error => {
+                    log('   ❌ ERROR: ' + error.message);
+                    alert('❌ Error: ' + error.message);
+                });
+            });
+            log('   ✓ Want-to-watch form handler attached');
+        } else {
+            log('   ❌ Want-to-watch form not found!');
+        }
+
+        // Initial render
+        log('🎬 Calling renderLists()...');
+        renderLists();
+
+        log('═══════════════════════════════════════════════');
+        log('✅ ALL JAVASCRIPT LOADED SUCCESSFULLY!');
+        log('═══════════════════════════════════════════════');
+    </script>
+</body>
+</html>

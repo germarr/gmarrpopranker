@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Movie Ranker</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page">
+        <nav class="navbar">
+            <a href="/" class="navbar__logo">Movie Ranker</a>
+            <div class="navbar__links">
+                <a href="/" class="navbar__link">Home</a>
+                <a href="/blog" class="navbar__link">Blog</a>
+                <a href="/top" class="navbar__link">Top 25</a>
+                <a href="/crm" class="navbar__link">CRM</a>
+            </div>
+        </nav>
+        <header class="hero hero--compact">
+            <p class="hero__eyebrow">Journal</p>
+            <h1 class="hero__title">Blog</h1>
+            <p class="hero__subtitle">Long-form notes about the films and series that stayed with me.</p>
+        </header>
+
+        <section class="blog-grid">
+            {% if posts %}
+                {% for post in posts %}
+                <article class="blog-card-enhanced">
+                    <div class="blog-card-enhanced__poster">
+                        {% if post.poster_url or post.image_url %}
+                        <img src="{{ post.poster_url or post.image_url }}" alt="{{ post.title }}" class="blog-card-enhanced__image">
+                        {% else %}
+                        <div class="blog-card-enhanced__placeholder">No Image</div>
+                        {% endif %}
+                    </div>
+                    <div class="blog-card-enhanced__content">
+                        <div class="blog-card-enhanced__meta-top">
+                            <p class="blog-card__date">{{ post.created_at }}</p>
+                            {% if post.score %}
+                            <span class="score">{{ post.score }}/10</span>
+                            {% endif %}
+                        </div>
+                        <h2 class="blog-card-enhanced__title">{{ post.title }}</h2>
+                        <div class="blog-card-enhanced__tags">
+                            {% if post.content_type %}
+                            <span class="mini-badge">{{ post.content_type }}</span>
+                            {% endif %}
+                            {% if post.release_year %}
+                            <span class="mini-badge">{{ post.release_year }}</span>
+                            {% endif %}
+                            {% if post.tmdb_rating %}
+                            <span class="mini-badge">⭐ {{ post.tmdb_rating }}</span>
+                            {% endif %}
+                        </div>
+                        {% if post.genres %}
+                        <p class="blog-card-enhanced__genres">{{ post.genres }}</p>
+                        {% endif %}
+                        <div class="blog-card__excerpt js-markdown" data-markdown='{{ post.body|tojson }}'></div>
+                        <a class="text-link" href="/blog/{{ post.slug }}">Read entry →</a>
+                    </div>
+                </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <p>No blog entries yet.</p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+    <script>
+        console.log('🚀 Blog list page JavaScript loading...');
+        console.log('📊 Posts found:', document.querySelectorAll('.js-markdown').length);
+
+        function encodeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = value;
+            return div.innerHTML;
+        }
+
+        function renderMarkdown(text) {
+            if (!text) {
+                return '';
+            }
+            const escaped = encodeHtml(text);
+            const parts = escaped.split('```');
+            const rendered = parts.map((part, index) => {
+                if (index % 2 === 1) {
+                    return `<pre><code>${part}</code></pre>`;
+                }
+                let output = part;
+                output = output.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+                output = output.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+                output = output.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+                output = output.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                output = output.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                output = output.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+                output = output.replace(/^\s*[-*] (.*)$/gm, '<li>$1</li>');
+                output = output.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
+                output = output.replace(/\n{2,}/g, '</p><p>');
+                output = `<p>${output}</p>`;
+                output = output.replace(/<p><\/p>/g, '');
+                output = output.replace(/<p>(<h[1-3]>)/g, '$1');
+                output = output.replace(/(<\/h[1-3]>)<\/p>/g, '$1');
+                return output;
+            });
+            return rendered.join('');
+        }
+
+        // Add staggered animation delays
+        document.querySelectorAll('.blog-card-enhanced').forEach((card, index) => {
+            card.style.setProperty('--i', index);
+        });
+
+        document.querySelectorAll('.js-markdown').forEach((block, index) => {
+            console.log(`📝 Rendering markdown block ${index + 1}...`);
+            const raw = block.dataset.markdown ? JSON.parse(block.dataset.markdown) : '';
+            console.log(`   Content length: ${raw.length} chars`);
+            const snippet = raw.length > 240 ? `${raw.slice(0, 240)}...` : raw;
+            block.innerHTML = renderMarkdown(snippet);
+            console.log(`   ✓ Rendered successfully`);
+        });
+        console.log('✅ Blog list page loaded successfully');
+    </script>
+</body>
+</html>

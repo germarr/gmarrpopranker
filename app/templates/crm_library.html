@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM - Movie Ranker</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page">
+        <nav class="navbar">
+            <a href="/" class="navbar__logo">Movie Ranker</a>
+            <div class="navbar__links">
+                <a href="/" class="navbar__link">Home</a>
+                <a href="/blog" class="navbar__link">Blog</a>
+                <a href="/top" class="navbar__link">Top 25</a>
+                <a href="/crm" class="navbar__link">CRM</a>
+            </div>
+        </nav>
+        <header class="hero hero--compact">
+            <p class="hero__eyebrow">Backstage</p>
+            <h1 class="hero__title">Library Console</h1>
+            <p class="hero__subtitle">Keep your diary tidy. Add titles, note impressions, and plan what is next.</p>
+        </header>
+
+        <main class="crm-grid">
+            <section class="panel">
+                <div class="panel__header">
+                    <h2>Add to Watched</h2>
+                    <p>Score and describe the experience.</p>
+                </div>
+                <form id="add-watched-form" class="form-grid" method="POST" enctype="multipart/form-data" action="javascript:void(0);">
+                    <label class="field">
+                        <span>Title</span>
+                        <input type="text" name="title" placeholder="e.g. Perfect Days" required>
+                    </label>
+                    <div class="field field--full tmdb-block">
+                        <span>TMDB search</span>
+                        <div class="tmdb-search-row">
+                            <input type="text" class="tmdb-query" placeholder="Search TMDB for a movie or series">
+                            <button type="button" class="button button--ghost tmdb-search-btn">Search</button>
+                        </div>
+                        <div class="tmdb-results"></div>
+                        <div class="tmdb-preview is-hidden">
+                            <img class="tmdb-preview__image" alt="">
+                            <div class="tmdb-preview__body">
+                                <p class="tmdb-preview__title"></p>
+                                <p class="tmdb-preview__meta"></p>
+                                <p class="tmdb-preview__synopsis"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <label class="field">
+                        <span>Score</span>
+                        <input type="number" name="score" placeholder="0-10" required min="0" max="10">
+                    </label>
+                    <label class="field">
+                        <span>Type</span>
+                        <select name="content_type" required>
+                            <option value="Movie">Movie</option>
+                            <option value="TV Series">TV Series</option>
+                        </select>
+                    </label>
+                    <label class="field js-season-field is-hidden">
+                        <span>Season</span>
+                        <input type="number" name="season" min="1" placeholder="1">
+                    </label>
+                    <label class="field field--full">
+                        <span>Comment</span>
+                        <textarea name="comment" placeholder="What stayed with you?" required></textarea>
+                    </label>
+                    <label class="field">
+                        <span>Watch date</span>
+                        <input type="date" name="watch_date" required>
+                    </label>
+                    <label class="field">
+                        <span>Image URL</span>
+                        <input type="text" name="image_url" placeholder="https://...">
+                    </label>
+                    <label class="field field--full">
+                        <span>Image file</span>
+                        <input type="file" name="image_file">
+                    </label>
+                    <input type="hidden" name="synopsis">
+                    <input type="hidden" name="release_year">
+                    <input type="hidden" name="runtime">
+                    <input type="hidden" name="genres">
+                    <input type="hidden" name="tmdb_id">
+                    <input type="hidden" name="tmdb_rating">
+                    <input type="hidden" name="poster_url">
+                    <button type="submit" class="button">Add to watched</button>
+                </form>
+            </section>
+
+            <section class="panel">
+                <div class="panel__header">
+                    <h2>Add to Want to Watch</h2>
+                    <p>Quietly queue the next release.</p>
+                </div>
+                <form id="add-want-to-watch-form" class="form-grid" method="POST" enctype="multipart/form-data" action="javascript:void(0);">
+                    <label class="field">
+                        <span>Title</span>
+                        <input type="text" name="title" placeholder="e.g. The Zone of Interest" required>
+                    </label>
+                    <div class="field field--full tmdb-block">
+                        <span>TMDB search</span>
+                        <div class="tmdb-search-row">
+                            <input type="text" class="tmdb-query" placeholder="Search TMDB for a movie or series">
+                            <button type="button" class="button button--ghost tmdb-search-btn">Search</button>
+                        </div>
+                        <div class="tmdb-results"></div>
+                        <div class="tmdb-preview is-hidden">
+                            <img class="tmdb-preview__image" alt="">
+                            <div class="tmdb-preview__body">
+                                <p class="tmdb-preview__title"></p>
+                                <p class="tmdb-preview__meta"></p>
+                                <p class="tmdb-preview__synopsis"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <label class="field">
+                        <span>Launch date</span>
+                        <input type="date" name="launch_date" required>
+                    </label>
+                    <label class="field">
+                        <span>Type</span>
+                        <select name="content_type" required>
+                            <option value="Movie">Movie</option>
+                            <option value="TV Series">TV Series</option>
+                        </select>
+                    </label>
+                    <label class="field js-season-field is-hidden">
+                        <span>Season</span>
+                        <input type="number" name="season" min="1" placeholder="1">
+                    </label>
+                    <label class="field">
+                        <span>Excitement (1-10)</span>
+                        <input type="number" name="excitement" placeholder="7" min="1" max="10" required>
+                    </label>
+                    <label class="field field--full">
+                        <span>Image URL</span>
+                        <input type="text" name="image_url" placeholder="https://...">
+                    </label>
+                    <label class="field field--full">
+                        <span>Image file</span>
+                        <input type="file" name="image_file">
+                    </label>
+                    <input type="hidden" name="synopsis">
+                    <input type="hidden" name="release_year">
+                    <input type="hidden" name="runtime">
+                    <input type="hidden" name="genres">
+                    <input type="hidden" name="tmdb_id">
+                    <input type="hidden" name="tmdb_rating">
+                    <input type="hidden" name="poster_url">
+                    <button type="submit" class="button button--ghost">Add to queue</button>
+                </form>
+            </section>
+        </main>
+
+        <section class="crm-lists">
+            <div class="panel">
+                <div class="panel__header">
+                    <h2>Watched list</h2>
+                    <p>Recent entries.</p>
+                </div>
+                <div id="watched-list" class="crm-list"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel__header">
+                    <h2>Want to watch list</h2>
+                    <p>Upcoming entries.</p>
+                </div>
+                <div id="want-to-watch-list" class="crm-list"></div>
+            </div>
+        </section>
+        <section class="blog-row">
+            <div class="panel blog-panel">
+                <div class="panel__header">
+                    <h2>Blog entries</h2>
+                    <p>Write long-form notes and edit existing entries.</p>
+                </div>
+                <div class="blog-layout">
+                    <form id="add-blog-form" class="form-grid" method="POST" action="javascript:void(0);">
+                        <label class="field field--full">
+                            <span>Watched item</span>
+                            <select name="watched_id" id="blog-watched-id" required></select>
+                        </label>
+                        <label class="field field--full">
+                            <span>Title</span>
+                            <input type="text" name="title" placeholder="A quiet masterpiece" required>
+                        </label>
+                        <label class="field field--full">
+                            <span>Slug</span>
+                            <input type="text" name="slug" placeholder="home-alone" required>
+                        </label>
+                        <label class="field field--full">
+                            <span>Body</span>
+                            <textarea name="body" placeholder="Write the full entry..." required></textarea>
+                        </label>
+                        <div class="field field--full">
+                            <span>Live preview</span>
+                            <div class="markdown-preview" id="blog-preview">Start writing to see the preview.</div>
+                        </div>
+                        <button type="submit" class="button">Publish entry</button>
+                    </form>
+                    <div id="blog-list" class="crm-list"></div>
+                </div>
+            </div>
+        </section>
+
+    <script>
+        console.log('🚀 SCRIPT STARTED - CRM JavaScript is loading...');
+        console.log('📍 Current URL:', window.location.href);
+        console.log('📄 Document ready state:', document.readyState);
+
+        const watchedListDiv = document.getElementById('watched-list');
+        const wantToWatchListDiv = document.getElementById('want-to-watch-list');
+        const blogListDiv = document.getElementById('blog-list');
+        const blogWatchedSelect = document.getElementById('blog-watched-id');
+
+        console.log('🔍 DOM Elements:', {
+            watchedListDiv: !!watchedListDiv,
+            wantToWatchListDiv: !!wantToWatchListDiv,
+            blogListDiv: !!blogListDiv,
+            blogWatchedSelect: !!blogWatchedSelect
+        });
+
+        function renderLists() {
+            fetch('/api/watched', { credentials: 'same-origin' })
+                .then(response => response.json())
+                .then(data => {
+                    watchedListDiv.innerHTML = '';
+                    blogWatchedSelect.innerHTML = '';
+                    if (data.length === 0) {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'Add a watched item first';
+                        blogWatchedSelect.appendChild(option);
+                    }
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'list-card';
+                        div.dataset.item = JSON.stringify(item);
+                        div.innerHTML = `
+                            <div class="list-card__header">
+                                <h3>${item.title}</h3>
+                                <span class="score">${item.score}/10</span>
+                            </div>
+                            <p class="list-card__text">${item.comment}</p>
+                            <p class="list-card__meta">${formatTypeMeta(item)} · Watched on ${item.watch_date}</p>
+                            <div class="list-card__actions">
+                                <button class="button button--ghost js-edit" data-list="watched">Edit</button>
+                                <button onclick="deleteItem('watched', ${item.id})" class="button button--danger">Remove</button>
+                            </div>
+                        `;
+                        watchedListDiv.appendChild(div);
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = `${item.title} (${item.watch_date})`;
+                        blogWatchedSelect.appendChild(option);
+                    });
+                    attachEditHandlers();
+                });
+
+            fetch('/api/want-to-watch', { credentials: 'same-origin' })
+                .then(response => response.json())
+                .then(data => {
+                    wantToWatchListDiv.innerHTML = '';
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'list-card';
+                        div.dataset.item = JSON.stringify(item);
+                        div.innerHTML = `
+                            <div class="list-card__header">
+                                <h3>${item.title}</h3>
+                                <span class="badge">Planned</span>
+                            </div>
+                            <p class="list-card__text">Excitement ${item.excitement}/10</p>
+                            <p class="list-card__meta">${formatTypeMeta(item)} · Launch date ${item.launch_date}</p>
+                            <div class="list-card__actions">
+                                <button class="button button--ghost js-edit" data-list="want-to-watch">Edit</button>
+                                <button onclick="deleteItem('want-to-watch', ${item.id})" class="button button--danger">Remove</button>
+                            </div>
+                        `;
+                        wantToWatchListDiv.appendChild(div);
+                    });
+                    attachEditHandlers();
+                });
+
+            fetch('/api/blog', { credentials: 'same-origin' })
+                .then(response => response.json())
+                .then(data => {
+                    blogListDiv.innerHTML = '';
+                    if (data.length === 0) {
+                        blogListDiv.innerHTML = '<div class="empty-state">No blog entries yet.</div>';
+                        return;
+                    }
+                    data.forEach(post => {
+                        const div = document.createElement('div');
+                        div.className = 'list-card';
+                        div.dataset.post = JSON.stringify(post);
+                        div.innerHTML = `
+                            <div class="list-card__header">
+                                <h3>${post.title}</h3>
+                                <span class="badge">Blog</span>
+                            </div>
+                            <div class="list-card__text markdown-preview js-blog-preview"></div>
+                            <p class="list-card__meta">Slug: /${post.slug}</p>
+                            <div class="list-card__actions">
+                                <button class="button button--ghost js-edit-blog">Edit</button>
+                                <button onclick="deleteBlog(${post.id})" class="button button--danger">Remove</button>
+                            </div>
+                        `;
+                        const preview = div.querySelector('.js-blog-preview');
+                        preview.dataset.markdown = post.body || '';
+                        blogListDiv.appendChild(div);
+                    });
+                    attachBlogEditHandlers();
+                    renderBlogPreviews();
+                });
+        }
+
+        function deleteItem(list, id) {
+            fetch(`/api/${list}/${id}`, { method: 'DELETE', credentials: 'same-origin' })
+                .then(() => renderLists());
+        }
+
+        function attachEditHandlers() {
+            document.querySelectorAll('.js-edit').forEach(button => {
+                button.removeEventListener('click', handleEditClick);
+                button.addEventListener('click', handleEditClick);
+            });
+        }
+
+        function handleEditClick(event) {
+            const button = event.currentTarget;
+            const card = button.closest('.list-card');
+            const item = JSON.parse(card.dataset.item);
+            const list = button.dataset.list;
+            editItem(list, item);
+        }
+
+        function getNumberInput(label, currentValue) {
+            const input = prompt(label, currentValue);
+            if (input === null || input.trim() === '') {
+                return currentValue;
+            }
+            const parsed = Number(input);
+            return Number.isNaN(parsed) ? currentValue : parsed;
+        }
+
+        function formatTypeMeta(item) {
+            if (item.content_type === 'TV Series' && item.season) {
+                return `${item.content_type} · Season ${item.season}`;
+            }
+            return item.content_type;
+        }
+
+        function editItem(list, item) {
+            if (list === 'watched') {
+                const title = prompt('Title', item.title) || item.title;
+                const score = getNumberInput('Score (0-10)', item.score);
+                const contentType = prompt('Type (Movie or TV Series)', item.content_type) || item.content_type;
+                const season = contentType === 'TV Series' ? getNumberInput('Season', item.season || 1) : null;
+                const comment = prompt('Comment', item.comment) || item.comment;
+                const watchDate = prompt('Watch date (YYYY-MM-DD)', item.watch_date) || item.watch_date;
+                const imageUrl = prompt('Image URL', item.image_url) || item.image_url;
+                const payload = { ...item, title, score, content_type: contentType, season, comment, watch_date: watchDate, image_url: imageUrl };
+                updateItem('watched', item.id, payload);
+                return;
+            }
+
+            const title = prompt('Title', item.title) || item.title;
+            const launchDate = prompt('Launch date (YYYY-MM-DD)', item.launch_date) || item.launch_date;
+            const excitement = getNumberInput('Excitement (1-10)', item.excitement);
+            const contentType = prompt('Type (Movie or TV Series)', item.content_type) || item.content_type;
+            const season = contentType === 'TV Series' ? getNumberInput('Season', item.season || 1) : null;
+            const imageUrl = prompt('Image URL', item.image_url) || item.image_url;
+            const payload = { ...item, title, launch_date: launchDate, excitement, content_type: contentType, season, image_url: imageUrl };
+            updateItem('want-to-watch', item.id, payload);
+        }
+
+        function updateItem(list, id, payload) {
+            fetch(`/api/${list}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Update failed');
+                    }
+                    return response.json();
+                })
+                .then(() => renderLists())
+                .catch(() => alert('Could not update item. Check the fields and try again.'));
+        }
+
+        function encodeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = value;
+            return div.innerHTML;
+        }
+
+        function renderMarkdown(text) {
+            if (!text) {
+                return '';
+            }
+            const escaped = encodeHtml(text);
+            const parts = escaped.split('```');
+            const rendered = parts.map((part, index) => {
+                if (index % 2 === 1) {
+                    return `<pre><code>${part}</code></pre>`;
+                }
+                let output = part;
+                output = output.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+                output = output.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+                output = output.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+                output = output.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
+                output = output.replace(/\\*(.*?)\\*/g, '<em>$1</em>');
+                output = output.replace(/\\[(.*?)\\]\\((.*?)\\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+                output = output.replace(/^\\s*[-*] (.*)$/gm, '<li>$1</li>');
+                output = output.replace(/(<li>.*<\\/li>)/g, '<ul>$1</ul>');
+                output = output.replace(/\\n{2,}/g, '</p><p>');
+                output = `<p>${output}</p>`;
+                output = output.replace(/<p><\\/p>/g, '');
+                output = output.replace(/<p>(<h[1-3]>)/g, '$1');
+                output = output.replace(/(<\\/h[1-3]>)<\\/p>/g, '$1');
+                return output;
+            });
+            return rendered.join('');
+        }
+
+        function slugify(value) {
+            return value
+                .toLowerCase()
+                .trim()
+                .replace(/\\s+/g, '-')
+                .replace(/[^a-z0-9-]/g, '')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+        }
+
+        function setupTmdbSearch(form, mediaTypeFilter) {
+            const queryInput = form.querySelector('.tmdb-query');
+            const searchButton = form.querySelector('.tmdb-search-btn');
+            const resultsContainer = form.querySelector('.tmdb-results');
+            const preview = form.querySelector('.tmdb-preview');
+            const previewImage = form.querySelector('.tmdb-preview__image');
+            const previewTitle = form.querySelector('.tmdb-preview__title');
+            const previewMeta = form.querySelector('.tmdb-preview__meta');
+            const previewSynopsis = form.querySelector('.tmdb-preview__synopsis');
+
+            const titleInput = form.querySelector('input[name="title"]');
+            const contentSelect = form.querySelector('select[name="content_type"]');
+            const imageInput = form.querySelector('input[name="image_url"]');
+
+            const setHidden = (name, value) => {
+                const input = form.querySelector(`input[name="${name}"]`);
+                if (input) {
+                    input.value = value ?? '';
+                }
+            };
+
+            const renderResults = (results) => {
+                resultsContainer.innerHTML = '';
+                if (!results.length) {
+                    resultsContainer.textContent = 'No results found.';
+                    return;
+                }
+                results.forEach(result => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'tmdb-result';
+                    const year = result.year ? ` (${result.year})` : '';
+                    const imageHtml = result.poster_url
+                        ? `<img class="tmdb-result__image" src="${result.poster_url}" alt="${encodeHtml(result.title)} poster">`
+                        : `<div class="tmdb-result__placeholder">No poster</div>`;
+                    button.innerHTML = `
+                        ${imageHtml}
+                        <div class="tmdb-result__content">
+                            <p class="tmdb-result__title">${result.title}${year}</p>
+                            <p class="tmdb-result__meta">${result.media_type === 'movie' ? 'Movie' : 'TV Series'}</p>
+                        </div>
+                    `;
+                    button.addEventListener('click', () => selectResult(result));
+                    resultsContainer.appendChild(button);
+                });
+            };
+
+            const selectResult = (result) => {
+                console.log('Fetching TMDB details for:', result);
+                fetch(`/api/tmdb/details/${result.media_type}/${result.id}`, { credentials: 'same-origin' })
+                    .then(response => {
+                        console.log('TMDB details response status:', response.status);
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                console.error('TMDB details failed:', data);
+                                throw new Error(data.detail || 'Details failed');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(details => {
+                        console.log('TMDB details received:', details);
+                        titleInput.value = details.title || titleInput.value;
+                        if (contentSelect) {
+                            contentSelect.value = details.content_type || contentSelect.value;
+                            contentSelect.dispatchEvent(new Event('change'));
+                        }
+                        if (details.poster_url && imageInput) {
+                            imageInput.value = details.poster_url;
+                        }
+                        setHidden('synopsis', details.synopsis);
+                        setHidden('release_year', details.release_year);
+                        setHidden('runtime', details.runtime);
+                        setHidden('genres', details.genres);
+                        setHidden('tmdb_id', details.tmdb_id);
+                        setHidden('tmdb_rating', details.tmdb_rating);
+                        setHidden('poster_url', details.poster_url);
+
+                        preview.classList.remove('is-hidden');
+                        if (details.poster_url) {
+                            previewImage.src = details.poster_url;
+                            previewImage.alt = details.title || 'Poster';
+                            previewImage.classList.remove('is-hidden');
+                        } else {
+                            previewImage.classList.add('is-hidden');
+                        }
+                        previewTitle.textContent = details.title || '';
+                        previewMeta.textContent = [
+                            details.release_year,
+                            details.runtime ? `${details.runtime} min` : '',
+                            details.genres,
+                            details.tmdb_rating ? `TMDB ${details.tmdb_rating.toFixed(1)}` : ''
+                        ].filter(Boolean).join(' · ');
+                        previewSynopsis.textContent = details.synopsis || '';
+                    })
+                    .catch((error) => {
+                        console.error('TMDB details error:', error);
+                        alert('Could not fetch TMDB details: ' + error.message + '. Check the console and API key.');
+                    });
+            };
+
+            const doSearch = () => {
+                const query = queryInput.value.trim();
+                if (!query) {
+                    resultsContainer.textContent = 'Enter a title to search.';
+                    return;
+                }
+                const params = new URLSearchParams({ query });
+                if (mediaTypeFilter) {
+                    params.set('media_type', mediaTypeFilter);
+                }
+                console.log('TMDB search:', query, mediaTypeFilter);
+                resultsContainer.textContent = 'Searching...';
+                fetch(`/api/tmdb/search?${params.toString()}`, { credentials: 'same-origin' })
+                    .then(response => {
+                        console.log('TMDB search response status:', response.status);
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                console.error('TMDB search failed:', data);
+                                throw new Error(data.detail || 'Search failed');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(results => {
+                        console.log('TMDB search results:', results);
+                        renderResults(results);
+                    })
+                    .catch((error) => {
+                        console.error('TMDB search error:', error);
+                        resultsContainer.textContent = 'Search failed: ' + error.message + '. Check console for details.';
+                    });
+            };
+
+            searchButton.addEventListener('click', doSearch);
+            queryInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    doSearch();
+                }
+            });
+        }
+
+        function renderBlogPreviews() {
+            document.querySelectorAll('.js-blog-preview').forEach(preview => {
+                const raw = preview.dataset.markdown || '';
+                const snippet = raw.length > 320 ? `${raw.slice(0, 320)}...` : raw;
+                preview.innerHTML = renderMarkdown(snippet);
+            });
+        }
+
+        function attachBlogEditHandlers() {
+            document.querySelectorAll('.js-edit-blog').forEach(button => {
+                button.removeEventListener('click', handleBlogEditClick);
+                button.addEventListener('click', handleBlogEditClick);
+            });
+        }
+
+        function handleBlogEditClick(event) {
+            const card = event.currentTarget.closest('.list-card');
+            const post = JSON.parse(card.dataset.post);
+            editBlogInline(card, post);
+        }
+
+        function editBlogInline(card, post) {
+            card.innerHTML = `
+                <div class="inline-editor">
+                    <label>
+                        <span>Title</span>
+                        <input type="text" value="${encodeHtml(post.title)}" data-field="title">
+                    </label>
+                    <label>
+                        <span>Slug</span>
+                        <input type="text" value="${encodeHtml(post.slug)}" data-field="slug">
+                    </label>
+                    <label>
+                        <span>Watched ID</span>
+                        <input type="number" value="${post.watched_id}" data-field="watched_id">
+                    </label>
+                    <label>
+                        <span>Body</span>
+                        <textarea data-field="body">${encodeHtml(post.body)}</textarea>
+                    </label>
+                    <div class="markdown-preview js-inline-preview"></div>
+                    <div class="list-card__actions">
+                        <button class="button js-save-blog">Save</button>
+                        <button class="button button--ghost js-cancel-blog">Cancel</button>
+                    </div>
+                </div>
+            `;
+
+            const bodyField = card.querySelector('[data-field="body"]');
+            const preview = card.querySelector('.js-inline-preview');
+            const renderInline = () => {
+                preview.innerHTML = renderMarkdown(bodyField.value);
+            };
+            renderInline();
+            bodyField.addEventListener('input', renderInline);
+
+            card.querySelector('.js-cancel-blog').addEventListener('click', () => renderLists());
+            card.querySelector('.js-save-blog').addEventListener('click', () => {
+                const title = card.querySelector('[data-field="title"]').value.trim() || post.title;
+                const slug = card.querySelector('[data-field="slug"]').value.trim() || post.slug;
+                const watchedIdField = card.querySelector('[data-field="watched_id"]');
+                const watchedIdValue = Number(watchedIdField.value);
+                const watchedId = Number.isNaN(watchedIdValue) ? post.watched_id : watchedIdValue;
+                const body = bodyField.value.trim() || post.body;
+                const payload = { ...post, title, slug, watched_id: watchedId, body };
+                updateBlog(post.id, payload);
+            });
+        }
+
+        function updateBlog(id, payload) {
+            fetch(`/api/blog/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Update failed');
+                    }
+                    return response.json();
+                })
+                .then(() => renderLists())
+                .catch(() => alert('Could not update blog post. Check the fields and try again.'));
+        }
+
+        function deleteBlog(id) {
+            fetch(`/api/blog/${id}`, { method: 'DELETE', credentials: 'same-origin' })
+                .then(() => renderLists());
+        }
+
+        console.log('🔗 Attaching event listener to add-watched-form...');
+        const watchedFormElement = document.getElementById('add-watched-form');
+        console.log('   Form element:', watchedFormElement);
+
+        watchedFormElement.addEventListener('submit', function(event) {
+            console.log('🎬 Watched form submission intercepted');
+            event.preventDefault();
+            console.log('✓ Default form submission prevented');
+
+            const formData = new FormData(this);
+            console.log('📋 FormData created with fields:', Array.from(formData.keys()));
+
+            const imageUrl = (formData.get('image_url') || '').toString().trim();
+            const imageFile = formData.get('image_file');
+            console.log('🖼️ Image URL:', imageUrl);
+            console.log('📁 Image File:', imageFile?.name || 'none');
+
+            if (!imageUrl && (!imageFile || imageFile.size === 0)) {
+                alert('Add an image URL or upload a file.');
+                return;
+            }
+
+            console.log('🚀 Sending POST to /api/watched');
+            fetch('/api/watched', { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(response => {
+                    console.log('📥 Response status:', response.status, response.statusText);
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            console.error('❌ Create failed:', data);
+                            throw new Error(data.detail || 'Create failed');
+                        }).catch(err => {
+                            if (err.message) throw err;
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    console.log('✅ Watched item created:', data);
+                    this.reset();
+                    renderLists();
+                })
+                .catch((error) => {
+                    console.error('❌ Error:', error);
+                    alert('Could not add item. Error: ' + error.message);
+                });
+        });
+
+        console.log('🔗 Attaching event listener to add-want-to-watch-form...');
+        const wantToWatchFormElement = document.getElementById('add-want-to-watch-form');
+        console.log('   Form element:', wantToWatchFormElement);
+
+        wantToWatchFormElement.addEventListener('submit', function(event) {
+            console.log('📺 Want-to-watch form submission intercepted');
+            event.preventDefault();
+            console.log('✓ Default form submission prevented');
+
+            const formData = new FormData(this);
+            console.log('📋 FormData created with fields:', Array.from(formData.keys()));
+
+            const imageUrl = (formData.get('image_url') || '').toString().trim();
+            const imageFile = formData.get('image_file');
+            console.log('🖼️ Image URL:', imageUrl);
+            console.log('📁 Image File:', imageFile?.name || 'none');
+
+            if (!imageUrl && (!imageFile || imageFile.size === 0)) {
+                alert('Add an image URL or upload a file.');
+                return;
+            }
+
+            console.log('🚀 Sending POST to /api/want-to-watch');
+            fetch('/api/want-to-watch', { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(response => {
+                    console.log('📥 Response status:', response.status, response.statusText);
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            console.error('❌ Create failed:', data);
+                            throw new Error(data.detail || 'Create failed');
+                        }).catch(err => {
+                            if (err.message) throw err;
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    console.log('✅ Want-to-watch item created:', data);
+                    this.reset();
+                    renderLists();
+                })
+                .catch((error) => {
+                    console.error('❌ Error:', error);
+                    alert('Could not add item. Error: ' + error.message);
+                });
+        });
+
+        console.log('🔗 Attaching event listener to add-blog-form...');
+        const blogFormElement = document.getElementById('add-blog-form');
+        console.log('   Form element:', blogFormElement);
+
+        blogFormElement.addEventListener('submit', function(event) {
+            console.log('📝 Blog form submission intercepted');
+            event.preventDefault();
+            console.log('✓ Default form submission prevented');
+
+            const formData = new FormData(this);
+            console.log('Submitting blog post:', {
+                watched_id: formData.get('watched_id'),
+                title: formData.get('title'),
+                slug: formData.get('slug'),
+                body_length: formData.get('body')?.length
+            });
+            fetch('/api/blog', { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(response => {
+                    console.log('Blog post response status:', response.status);
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            console.error('Blog post creation failed:', data);
+                            throw new Error(data.detail || 'Create failed');
+                        }).catch(err => {
+                            console.error('Blog post error:', err);
+                            throw err;
+                        });
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    console.log('Blog post created successfully:', data);
+                    this.reset();
+                    renderLists();
+                })
+                .catch((error) => {
+                    console.error('Blog post submission error:', error);
+                    alert('Could not add blog post. Check the console and fields and try again. Error: ' + error.message);
+                });
+        });
+
+        const blogBodyInput = document.querySelector('#add-blog-form textarea[name="body"]');
+        const blogTitleInput = document.querySelector('#add-blog-form input[name="title"]');
+        const blogSlugInput = document.querySelector('#add-blog-form input[name="slug"]');
+        const blogPreview = document.getElementById('blog-preview');
+
+        if (blogBodyInput) {
+            blogBodyInput.addEventListener('input', () => {
+                blogPreview.innerHTML = renderMarkdown(blogBodyInput.value);
+            });
+        }
+
+        if (blogTitleInput && blogSlugInput) {
+            blogTitleInput.addEventListener('input', () => {
+                if (!blogSlugInput.dataset.locked) {
+                    blogSlugInput.value = slugify(blogTitleInput.value);
+                }
+            });
+            blogSlugInput.addEventListener('input', () => {
+                if (blogSlugInput.value.trim().length > 0) {
+                    blogSlugInput.dataset.locked = 'true';
+                } else {
+                    delete blogSlugInput.dataset.locked;
+                }
+            });
+        }
+
+        document.querySelectorAll('form').forEach(form => {
+            const select = form.querySelector('select[name="content_type"]');
+            if (!select) {
+                return;
+            }
+            const seasonField = form.querySelector('.js-season-field');
+            if (!seasonField) {
+                return;
+            }
+            const toggleSeason = () => {
+                if (select.value === 'TV Series') {
+                    seasonField.classList.remove('is-hidden');
+                    const input = seasonField.querySelector('input');
+                    if (input) {
+                        input.disabled = false;
+                    }
+                } else {
+                    seasonField.classList.add('is-hidden');
+                    const input = seasonField.querySelector('input');
+                    if (input) {
+                        input.value = '';
+                        input.disabled = true;
+                    }
+                }
+            };
+            select.addEventListener('change', toggleSeason);
+            toggleSeason();
+        });
+
+        const watchedForm = document.getElementById('add-watched-form');
+        const plannedForm = document.getElementById('add-want-to-watch-form');
+        const blogForm = document.getElementById('add-blog-form');
+
+        console.log('🎬 Initializing CRM page...');
+        console.log('✓ Watched form found:', !!watchedForm);
+        console.log('✓ Want-to-watch form found:', !!plannedForm);
+        console.log('✓ Blog form found:', !!blogForm);
+
+        if (watchedForm) {
+            setupTmdbSearch(watchedForm);
+            console.log('✓ TMDB search setup for watched form');
+        }
+        if (plannedForm) {
+            setupTmdbSearch(plannedForm);
+            console.log('✓ TMDB search setup for want-to-watch form');
+        }
+
+        console.log('✅ CRM page initialization complete');
+        console.log('📝 Form submission handlers are attached');
+        renderLists();
+
+        console.log('═══════════════════════════════════════════════════════');
+        console.log('🎉 ALL JAVASCRIPT LOADED SUCCESSFULLY');
+        console.log('✅ You can now submit forms and they will be logged here');
+        console.log('═══════════════════════════════════════════════════════');
+    </script>
+</body>
+</html>

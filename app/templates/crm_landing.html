@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Hub - Movie Ranker</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        .crm-hub-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+        .hub-card {
+            background: #fff;
+            border: 1px solid rgba(201, 194, 182, 0.6);
+            border-radius: 20px;
+            padding: 32px 28px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 12px 26px rgba(54, 47, 38, 0.05);
+        }
+        .hub-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(54, 47, 38, 0.12);
+            border-color: var(--accent);
+        }
+        .hub-card__icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .hub-card__title {
+            font-family: "Shippori Mincho", serif;
+            font-size: 1.4rem;
+            margin: 0;
+        }
+        .hub-card__desc {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        .hub-card__arrow {
+            margin-top: auto;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .hub-card__arrow::after {
+            content: "→";
+            transition: transform 0.2s ease;
+        }
+        .hub-card:hover .hub-card__arrow::after {
+            transform: translateX(4px);
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <nav class="navbar">
+            <a href="/" class="navbar__logo">Movie Ranker</a>
+            <div class="navbar__links">
+                <a href="/" class="navbar__link">Home</a>
+                <a href="/blog" class="navbar__link">Blog</a>
+                <a href="/top" class="navbar__link">Top 25</a>
+                <a href="/crm" class="navbar__link">CRM</a>
+            </div>
+        </nav>
+        <header class="hero hero--compact">
+            <p class="hero__eyebrow">Backstage</p>
+            <h1 class="hero__title">CRM Hub</h1>
+            <p class="hero__subtitle">Central command for managing your movie diary and blog.</p>
+        </header>
+
+        <main class="crm-hub-grid">
+            <a href="/crm-library" class="hub-card">
+                <div class="hub-card__icon">📚</div>
+                <h2 class="hub-card__title">Library Console</h2>
+                <p class="hub-card__desc">The classic all-in-one editor. Manage watched items, the queue, and write blog posts manually.</p>
+                <div class="hub-card__arrow">Open Library</div>
+            </a>
+
+            <a href="/crm-tmdb" class="hub-card">
+                <div class="hub-card__icon">🎬</div>
+                <h2 class="hub-card__title">TMDB Integration</h2>
+                <p class="hub-card__desc">Search The Movie Database to auto-fill metadata. Manage your Top 25 lists.</p>
+                <div class="hub-card__arrow">Open TMDB Tools</div>
+            </a>
+
+            <a href="/crm-blog" class="hub-card">
+                <div class="hub-card__icon">✍️</div>
+                <h2 class="hub-card__title">Blog Manager</h2>
+                <p class="hub-card__desc">Focused interface for writing, editing, and managing your long-form blog entries.</p>
+                <div class="hub-card__arrow">Open Blog Editor</div>
+            </a>
+
+            <a href="/crm-top" class="hub-card">
+                <div class="hub-card__icon">🏆</div>
+                <h2 class="hub-card__title">Top 25 Manager</h2>
+                <p class="hub-card__desc">Manage your ranked lists. Update rankings or remove items from the top list.</p>
+                <div class="hub-card__arrow">Open Top 25</div>
+            </a>
+
+            <a href="/crm-simple" class="hub-card">
+                <div class="hub-card__icon">⚡</div>
+                <h2 class="hub-card__title">Quick Add</h2>
+                <p class="hub-card__desc">Simplified forms for rapid entry on the go. No external API calls.</p>
+                <div class="hub-card__arrow">Open Quick Add</div>
+            </a>
+        </main>
+    </div>
+</body>
+</html>

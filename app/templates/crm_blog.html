@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog CRM - Movie Ranker</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .debug-panel {
+            background: #f0f0f0;
+            border: 2px solid #333;
+            padding: 20px;
+            margin: 20px;
+            font-family: monospace;
+        }
+        .debug-log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .markdown-preview {
+            border: 1px solid #ccc;
+            padding: 15px;
+            background: #f9f9f9;
+            min-height: 100px;
+            margin-top: 10px;
+        }
+        .blog-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+        }
+        .blog-card h3 {
+            margin: 0 0 10px 0;
+        }
+        .blog-actions {
+            margin-top: 10px;
+        }
+        .blog-actions button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <nav class="navbar">
+            <a href="/" class="navbar__logo">Movie Ranker</a>
+            <div class="navbar__links">
+                <a href="/" class="navbar__link">Home</a>
+                <a href="/blog" class="navbar__link">Blog</a>
+                <a href="/top" class="navbar__link">Top 25</a>
+                <a href="/crm" class="navbar__link">CRM</a>
+            </div>
+        </nav>
+        <header class="hero hero--compact">
+            <p class="hero__eyebrow">Blog Management</p>
+            <h1 class="hero__title">Blog CRM</h1>
+            <p class="hero__subtitle">Create and manage blog posts</p>
+        </header>
+
+        <div class="debug-panel">
+            <h2>🔍 Debug Console</h2>
+            <div id="debug-log" class="debug-log">Waiting for JavaScript to load...</div>
+        </div>
+
+        <main class="crm-grid">
+            <section class="panel">
+                <div class="panel__header">
+                    <h2>Create Blog Post</h2>
+                    <p>Write a post about a watched movie</p>
+                </div>
+                <form id="add-blog-form">
+                    <label class="field field--full">
+                        <span>Watched Item</span>
+                        <select name="watched_id" id="blog-watched-id" required>
+                            <option value="">Loading...</option>
+                        </select>
+                    </label>
+                    <label class="field field--full">
+                        <span>Blog Title</span>
+                        <input type="text" name="title" id="blog-title" placeholder="e.g., Why This Movie Matters" required>
+                    </label>
+                    <label class="field field--full">
+                        <span>Slug (URL)</span>
+                        <input type="text" name="slug" id="blog-slug" placeholder="e.g., why-this-movie-matters" required>
+                        <small>Used in the URL: yoursite.com/<strong>slug-here</strong></small>
+                    </label>
+                    <label class="field field--full">
+                        <span>Body (Markdown supported)</span>
+                        <textarea name="body" id="blog-body" placeholder="Write your blog post here..." required rows="10"></textarea>
+                    </label>
+                    <div class="field field--full">
+                        <span>Live Preview</span>
+                        <div class="markdown-preview" id="blog-preview">Start writing to see preview...</div>
+                    </div>
+                    <button type="submit" class="button">Publish Blog Post</button>
+                </form>
+            </section>
+        </main>
+
+        <section class="panel" style="margin: 20px;">
+            <div class="panel__header">
+                <h2>Existing Blog Posts</h2>
+                <p>Manage your published posts</p>
+            </div>
+            <div id="blog-list">Loading...</div>
+        </section>
+
+    </div>
+
+    <script>
+        // Debug logging function
+        function log(message) {
+            const debugLog = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.innerHTML += `\n[${timestamp}] ${message}`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(message);
+        }
+
+        log('🚀 Blog CRM JavaScript started loading...');
+        log('📍 Current URL: ' + window.location.href);
+
+        // Get DOM elements
+        const blogForm = document.getElementById('add-blog-form');
+        const blogWatchedSelect = document.getElementById('blog-watched-id');
+        const blogTitle = document.getElementById('blog-title');
+        const blogSlug = document.getElementById('blog-slug');
+        const blogBody = document.getElementById('blog-body');
+        const blogPreview = document.getElementById('blog-preview');
+        const blogList = document.getElementById('blog-list');
+
+        log('🔍 Checking DOM elements...');
+        log('   add-blog-form: ' + (blogForm ? 'FOUND' : 'NOT FOUND'));
+        log('   blog-watched-id: ' + (blogWatchedSelect ? 'FOUND' : 'NOT FOUND'));
+        log('   blog-list: ' + (blogList ? 'FOUND' : 'NOT FOUND'));
+
+        // Simple markdown renderer
+        function renderMarkdown(text) {
+            if (!text) return '';
+            let html = text;
+            // Bold
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            // Italic
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            // Headers
+            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+            // Line breaks
+            html = html.replace(/\n/g, '<br>');
+            return html;
+        }
+
+        // Slugify function
+        function slugify(text) {
+            return text
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-z0-9-]/g, '')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+        }
+
+        // Load watched items for dropdown (including Top 25)
+        function loadWatchedItems() {
+            log('📋 Loading watched items for dropdown...');
+            Promise.all([
+                fetch('/api/watched', { credentials: 'same-origin' }).then(r => r.json()),
+                fetch('/api/top', { credentials: 'same-origin' }).then(r => r.json())
+            ])
+            .then(([watched, top]) => {
+                const allItems = [...watched, ...top];
+                // Sort by date desc
+                allItems.sort((a, b) => new Date(b.watch_date) - new Date(a.watch_date));
+                
+                log(`   Received ${allItems.length} items total (${watched.length} watched, ${top.length} top)`);
+                blogWatchedSelect.innerHTML = '';
+                if (allItems.length === 0) {
+                    blogWatchedSelect.innerHTML = '<option value="">No watched items available</option>';
+                    log('   ⚠️  No items found!');
+                } else {
+                    blogWatchedSelect.innerHTML = '<option value="">Select a watched item...</option>';
+                    allItems.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        const prefix = item.top_rank ? `[Top #${item.top_rank}] ` : '';
+                        option.textContent = `${prefix}${item.title} (${item.watch_date})`;
+                        blogWatchedSelect.appendChild(option);
+                    });
+                    log('   ✓ Dropdown populated');
+                }
+            })
+            .catch(err => {
+                log('   ❌ Error loading items: ' + err.message);
+                blogWatchedSelect.innerHTML = '<option value="">Error loading items</option>';
+            });
+        }
+
+        // Load existing blog posts
+        function loadBlogPosts() {
+            log('📋 Loading existing blog posts...');
+            fetch('/api/blog', { credentials: 'same-origin' })
+                .then(response => {
+                    log('   Response status: ' + response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    log('   Received ' + data.length + ' blog posts');
+                    blogList.innerHTML = '';
+                    if (data.length === 0) {
+                        blogList.innerHTML = '<div class="empty-state">No blog posts yet. Create one above!</div>';
+                    } else {
+                        data.forEach(post => {
+                            const div = document.createElement('div');
+                            div.className = 'blog-card';
+                            div.innerHTML = `
+                                <h3>${post.title}</h3>
+                                <p><strong>Slug:</strong> /${post.slug}</p>
+                                <p><strong>Watched ID:</strong> ${post.watched_id}</p>
+                                <p><strong>Created:</strong> ${new Date(post.created_at).toLocaleString()}</p>
+                                <details>
+                                    <summary>View body (${post.body.length} chars)</summary>
+                                    <div class="markdown-preview">${renderMarkdown(post.body)}</div>
+                                </details>
+                                <div class="blog-actions">
+                                    <button class="button button--ghost" onclick="editBlog(${post.id})">Edit</button>
+                                    <button class="button button--danger" onclick="deleteBlog(${post.id})">Delete</button>
+                                </div>
+                            `;
+                            blogList.appendChild(div);
+                        });
+                        log('   ✓ Blog posts rendered');
+                    }
+                })
+                .catch(err => {
+                    log('   ❌ Error loading blog posts: ' + err.message);
+                    blogList.innerHTML = '<div class="empty-state">Error loading blog posts</div>';
+                });
+        }
+
+        // Delete blog post
+        window.deleteBlog = function(id) {
+            if (!confirm('Are you sure you want to delete this blog post?')) {
+                return;
+            }
+            log('🗑️  Deleting blog post ID: ' + id);
+            fetch(`/api/blog/${id}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                log('   Response: ' + response.status);
+                if (!response.ok) {
+                    throw new Error('Delete failed');
+                }
+                return response.json();
+            })
+            .then(() => {
+                log('   ✅ Blog post deleted');
+                alert('✅ Blog post deleted!');
+                loadBlogPosts();
+            })
+            .catch(err => {
+                log('   ❌ Error: ' + err.message);
+                alert('❌ Error deleting post: ' + err.message);
+            });
+        };
+
+        // Edit blog post (simplified - just shows alert for now)
+        window.editBlog = function(id) {
+            alert('Edit functionality - coming soon!\n\nFor now, delete and recreate the post.');
+            log('ℹ️  Edit clicked for post ID: ' + id);
+        };
+
+        // Auto-slugify title
+        if (blogTitle && blogSlug) {
+            blogTitle.addEventListener('input', function() {
+                if (!blogSlug.dataset.locked) {
+                    blogSlug.value = slugify(blogTitle.value);
+                }
+            });
+            blogSlug.addEventListener('input', function() {
+                if (blogSlug.value.trim().length > 0) {
+                    blogSlug.dataset.locked = 'true';
+                } else {
+                    delete blogSlug.dataset.locked;
+                }
+            });
+            log('✓ Auto-slugify enabled');
+        }
+
+        // Live preview
+        if (blogBody && blogPreview) {
+            blogBody.addEventListener('input', function() {
+                blogPreview.innerHTML = renderMarkdown(blogBody.value) || 'Start writing to see preview...';
+            });
+            log('✓ Live preview enabled');
+        }
+
+        // Attach blog form handler
+        log('🔗 Attaching event listener to blog form...');
+        if (blogForm) {
+            blogForm.addEventListener('submit', function(event) {
+                log('📝 BLOG FORM SUBMITTED!');
+                event.preventDefault();
+                log('   ✓ Default prevented');
+
+                const formData = new FormData(this);
+                log('   📦 FormData created');
+                log('      Watched ID: ' + formData.get('watched_id'));
+                log('      Title: ' + formData.get('title'));
+                log('      Slug: ' + formData.get('slug'));
+                log('      Body length: ' + formData.get('body').length);
+
+                log('   🚀 Sending POST to /api/blog...');
+                fetch('/api/blog', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    log('   📥 Response: ' + response.status + ' ' + response.statusText);
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.detail || 'Request failed');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    log('   ✅ SUCCESS! Blog post created with ID: ' + data.id);
+                    alert('✅ Blog post published!\n\nSlug: /' + data.slug);
+                    blogForm.reset();
+                    blogPreview.innerHTML = 'Start writing to see preview...';
+                    delete blogSlug.dataset.locked;
+                    loadBlogPosts();
+                    loadWatchedItems(); // Reload in case new items were added
+                })
+                .catch(error => {
+                    log('   ❌ ERROR: ' + error.message);
+                    alert('❌ Error: ' + error.message);
+                });
+            });
+            log('   ✓ Blog form handler attached');
+        } else {
+            log('   ❌ Blog form not found!');
+        }
+
+        // Initial load
+        log('🎬 Loading initial data...');
+        loadWatchedItems();
+        loadBlogPosts();
+
+        log('═══════════════════════════════════════════════');
+        log('✅ BLOG CRM LOADED SUCCESSFULLY!');
+        log('═══════════════════════════════════════════════');
+    </script>
+</body>
+</html>

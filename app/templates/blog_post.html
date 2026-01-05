@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if post %}{{ post.title }}{% else %}Not Found{% endif %} - Movie Ranker</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page">
+        <nav class="navbar">
+            <a href="/" class="navbar__logo">Movie Ranker</a>
+            <div class="navbar__links">
+                <a href="/" class="navbar__link">Home</a>
+                <a href="/blog" class="navbar__link">Blog</a>
+                <a href="/top" class="navbar__link">Top 25</a>
+                <a href="/crm" class="navbar__link">CRM</a>
+            </div>
+        </nav>
+        <header class="hero hero--compact">
+            <p class="hero__eyebrow">Blog Entry</p>
+            <h1 class="hero__title">{% if post %}{{ post.title }}{% else %}Entry not found{% endif %}</h1>
+            <p class="hero__subtitle">{% if post %}{{ post.created_at }}{% else %}Try another link from the blog list.{% endif %}</p>
+        </header>
+
+        {% if post %}
+        <article class="blog-post">
+            <div class="blog-post-grid">
+                <aside class="blog-meta-column">
+                    {% if post.poster_url %}
+                    <img class="blog-poster" src="{{ post.poster_url }}" alt="{{ post.movie_title }} poster">
+                    {% elif post.image_url %}
+                    <img class="blog-poster" src="{{ post.image_url }}" alt="{{ post.movie_title }} poster">
+                    {% endif %}
+                    
+                    <div class="blog-meta-info">
+                        <div class="blog-meta-item">
+                            <span class="blog-meta-label">Work</span>
+                            <span class="blog-meta-value">{{ post.movie_title }}</span>
+                        </div>
+                        {% if post.release_year %}
+                        <div class="blog-meta-item">
+                            <span class="blog-meta-label">Year</span>
+                            <span class="blog-meta-value">{{ post.release_year }}</span>
+                        </div>
+                        {% endif %}
+                        {% if post.runtime %}
+                        <div class="blog-meta-item">
+                            <span class="blog-meta-label">Runtime</span>
+                            <span class="blog-meta-value">{{ post.runtime }} min</span>
+                        </div>
+                        {% endif %}
+                        {% if post.score %}
+                        <div class="blog-meta-item">
+                            <span class="blog-meta-label">My Score</span>
+                            <span class="blog-meta-value">{{ post.score }}/10</span>
+                        </div>
+                        {% endif %}
+                        {% if post.tmdb_rating %}
+                        <div class="blog-meta-item">
+                            <span class="blog-meta-label">TMDB</span>
+                            <span class="blog-meta-value">{{ "%.1f"|format(post.tmdb_rating) }}</span>
+                        </div>
+                        {% endif %}
+                        {% if post.genres %}
+                        <div class="blog-meta-item" style="display: block;">
+                            <span class="blog-meta-label" style="display: block; margin-bottom: 4px;">Genres</span>
+                            <span class="blog-meta-value" style="display: block; text-align: left; line-height: 1.4;">{{ post.genres }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </aside>
+                <div class="blog-post__body js-markdown" data-markdown='{{ post.body|tojson }}'></div>
+            </div>
+        </article>
+        {% endif %}
+
+        <div class="blog-back">
+            <a class="text-link" href="/blog">Back to blog</a>
+        </div>
+    </div>
+    <script>
+        console.log('🚀 Blog post page JavaScript loading...');
+        console.log('📄 Post exists:', {{ 'true' if post else 'false' }});
+        {% if post %}
+        console.log('📝 Post slug:', '{{ post.slug }}');
+        console.log('📝 Post title:', '{{ post.title }}');
+        {% endif %}
+
+        function encodeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = value;
+            return div.innerHTML;
+        }
+
+        function renderMarkdown(text) {
+            if (!text) {
+                return '';
+            }
+            const escaped = encodeHtml(text);
+            const parts = escaped.split('```');
+            const rendered = parts.map((part, index) => {
+                if (index % 2 === 1) {
+                    return `<pre><code>${part}</code></pre>`;
+                }
+                let output = part;
+                output = output.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+                output = output.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+                output = output.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+                output = output.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                output = output.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                output = output.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+                output = output.replace(/^\s*[-*] (.*)$/gm, '<li>$1</li>');
+                output = output.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
+                output = output.replace(/\n{2,}/g, '</p><p>');
+                output = `<p>${output}</p>`;
+                output = output.replace(/<p><\/p>/g, '');
+                output = output.replace(/<p>(<h[1-3]>)/g, '$1');
+                output = output.replace(/(<\/h[1-3]>)<\/p>/g, '$1');
+                return output;
+            });
+            return rendered.join('');
+        }
+
+        document.querySelectorAll('.js-markdown').forEach((block, index) => {
+            console.log(`📝 Rendering markdown block ${index + 1}...`);
+            const raw = block.dataset.markdown ? JSON.parse(block.dataset.markdown) : '';
+            console.log(`   Content length: ${raw.length} chars`);
+            block.innerHTML = renderMarkdown(raw);
+            console.log(`   ✓ Rendered successfully`);
+        });
+        console.log('✅ Blog post page loaded successfully');
+    </script>
+</body>
+</html>

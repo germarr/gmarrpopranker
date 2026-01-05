@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top 25 Manager - Movie Ranker</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        .tmdb-search-panel {
+            border: 2px solid #007bff;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        .tmdb-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .tmdb-result {
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .tmdb-result:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+        }
+        .tmdb-result img {
+            width: 100%;
+            display: block;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+        }
+        .tmdb-result__info {
+            padding: 10px;
+        }
+        .tmdb-result__title {
+            font-weight: bold;
+            margin: 0 0 5px 0;
+            font-size: 0.95rem;
+        }
+        .tmdb-result__meta {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
+        }
+        .tmdb-preview {
+            border: 2px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            background: #e8f5e9;
+            display: none;
+            border-radius: 12px;
+        }
+        .tmdb-preview.active {
+            display: block;
+        }
+        .tmdb-preview__header {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .tmdb-preview__poster {
+            width: 150px;
+            flex-shrink: 0;
+        }
+        .tmdb-preview__poster img {
+            width: 100%;
+            border-radius: 8px;
+        }
+        .tmdb-preview__details h3 {
+            margin: 0 0 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <nav class="navbar">
+            <a href="/" class="navbar__logo">Movie Ranker</a>
+            <div class="navbar__links">
+                <a href="/" class="navbar__link">Home</a>
+                <a href="/blog" class="navbar__link">Blog</a>
+                <a href="/top" class="navbar__link">Top 25</a>
+                <a href="/crm" class="navbar__link">CRM</a>
+            </div>
+        </nav>
+        <header class="hero hero--compact">
+            <p class="hero__eyebrow">List Manager</p>
+            <h1 class="hero__title">Top 25 Manager</h1>
+            <p class="hero__subtitle">Curate your favorites list and add new items via TMDB.</p>
+        </header>
+
+        <section class="tmdb-search-panel">
+            <h2>🔍 Search TMDB to Add</h2>
+            <p>Find a movie or series to add directly to your Top 25.</p>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <input type="text" id="tmdb-query" placeholder="e.g., The Matrix or Breaking Bad" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                <button id="tmdb-search-btn" class="button">Search</button>
+            </div>
+            <div id="tmdb-results" class="tmdb-results"></div>
+            <div id="tmdb-preview" class="tmdb-preview">
+                <h3>✅ Selected:</h3>
+                <div class="tmdb-preview__header">
+                    <div class="tmdb-preview__poster">
+                        <img id="preview-poster" src="" alt="">
+                    </div>
+                    <div class="tmdb-preview__details">
+                        <h3 id="preview-title"></h3>
+                        <p id="preview-meta"></p>
+                        <p id="preview-synopsis"></p>
+                    </div>
+                </div>
+                <button id="add-to-top-btn" class="button" style="background-color: #ffd700; color: #333;">Add to Top 25</button>
+            </div>
+        </section>
+
+        <main class="crm-lists">
+            <div class="panel">
+                <div class="panel__header">
+                    <h2>Top Movies</h2>
+                    <p>Drag and drop support coming later. Use actions for now.</p>
+                </div>
+                <div id="top-movies-list" class="crm-list">Loading...</div>
+            </div>
+
+            <div class="panel">
+                <div class="panel__header">
+                    <h2>Top Series</h2>
+                </div>
+                <div id="top-series-list" class="crm-list">Loading...</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- TMDB Search Logic ---
+        const tmdbQuery = document.getElementById('tmdb-query');
+        const tmdbSearchBtn = document.getElementById('tmdb-search-btn');
+        const tmdbResults = document.getElementById('tmdb-results');
+        const tmdbPreview = document.getElementById('tmdb-preview');
+        const previewPoster = document.getElementById('preview-poster');
+        const previewTitle = document.getElementById('preview-title');
+        const previewMeta = document.getElementById('preview-meta');
+        const previewSynopsis = document.getElementById('preview-synopsis');
+        const addToTopBtn = document.getElementById('add-to-top-btn');
+
+        let selectedMovie = null;
+
+        function searchTMDB() {
+            const query = tmdbQuery.value.trim();
+            if (!query) return;
+
+            tmdbResults.innerHTML = '<p>Searching...</p>';
+            fetch(`/api/tmdb/search?query=${encodeURIComponent(query)}`, { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(results => {
+                    tmdbResults.innerHTML = '';
+                    if (results.length === 0) {
+                        tmdbResults.innerHTML = '<p>No results found.</p>';
+                        return;
+                    }
+                    results.forEach(result => {
+                        const div = document.createElement('div');
+                        div.className = 'tmdb-result';
+                        div.innerHTML = `
+                            ${result.poster_url ? `<img src="${result.poster_url}" alt="${result.title}">` : '<div style="height:300px;background:#eee;display:flex;align-items:center;justify-content:center;">No Poster</div>'}
+                            <div class="tmdb-result__info">
+                                <p class="tmdb-result__title">${result.title}</p>
+                                <p class="tmdb-result__meta">${result.media_type === 'movie' ? 'Movie' : 'TV Series'} (${result.year || 'N/A'})</p>
+                            </div>
+                        `;
+                        div.addEventListener('click', () => selectMovie(result));
+                        tmdbResults.appendChild(div);
+                    });
+                })
+                .catch(e => tmdbResults.innerHTML = `<p style="color:red">Error: ${e.message}</p>`);
+        }
+
+        function selectMovie(result) {
+            fetch(`/api/tmdb/details/${result.media_type}/${result.id}`, { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(details => {
+                    selectedMovie = details;
+                    showPreview(details);
+                });
+        }
+
+        function showPreview(details) {
+            tmdbPreview.classList.add('active');
+            previewPoster.src = details.poster_url || '';
+            previewTitle.textContent = details.title;
+            const parts = [
+                details.content_type,
+                details.release_year,
+                details.runtime ? `${details.runtime} min` : '',
+                details.genres
+            ].filter(Boolean);
+            previewMeta.textContent = parts.join(' • ');
+            previewSynopsis.textContent = details.synopsis || 'No synopsis.';
+        }
+
+        addToTopBtn.addEventListener('click', () => {
+            if (!selectedMovie) return;
+
+            const rank = prompt('Top 25 Rank (1-25):', '1');
+            if (!rank) return;
+
+            // Simplified: we just need rank for Top 25 items generally, but DB requires others.
+            // We'll prompt for basics or default them.
+            const score = prompt('Score (0-10):', '10');
+            if (!score) return;
+            const comment = prompt('Comment:', 'Masterpiece!');
+            if (!comment) return;
+            
+            // Default watch date to today if not provided? Or prompt.
+            const watchDate = prompt('Watch date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+            if (!watchDate) return;
+
+            const formData = new FormData();
+            formData.append('title', selectedMovie.title);
+            formData.append('score', score);
+            formData.append('comment', comment);
+            formData.append('watch_date', watchDate);
+            formData.append('content_type', selectedMovie.content_type);
+            formData.append('image_url', selectedMovie.poster_url || '');
+            formData.append('synopsis', selectedMovie.synopsis || '');
+            formData.append('release_year', selectedMovie.release_year || '');
+            formData.append('release_date', selectedMovie.release_date || '');
+            formData.append('runtime', selectedMovie.runtime || '');
+            formData.append('genres', selectedMovie.genres || '');
+            formData.append('tmdb_id', selectedMovie.tmdb_id || '');
+            formData.append('tmdb_rating', selectedMovie.tmdb_rating || '');
+            formData.append('poster_url', selectedMovie.poster_url || '');
+            formData.append('top_rank', rank);
+
+            fetch('/api/watched', { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(r => {
+                    if (r.ok) return r.json();
+                    throw new Error('Failed to add');
+                })
+                .then(data => {
+                    alert(`Added "${selectedMovie.title}" to Top 25 (Rank #${rank})!`);
+                    tmdbPreview.classList.remove('active');
+                    tmdbQuery.value = '';
+                    tmdbResults.innerHTML = '';
+                    selectedMovie = null;
+                    renderLists(); // Refresh the lists below
+                })
+                .catch(e => alert(e.message));
+        });
+
+        tmdbSearchBtn.addEventListener('click', searchTMDB);
+        tmdbQuery.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchTMDB(); });
+
+
+        // --- List Management Logic ---
+        function renderLists() {
+            fetch('/api/top', { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(data => {
+                    const movies = data.filter(i => i.content_type === 'Movie');
+                    const series = data.filter(i => i.content_type === 'TV Series');
+                    
+                    renderSection('top-movies-list', movies);
+                    renderSection('top-series-list', series);
+                });
+        }
+
+        function renderSection(elementId, items) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+            if (items.length === 0) {
+                container.innerHTML = '<div class="empty-state">No items in this list.</div>';
+                return;
+            }
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'list-card';
+                div.innerHTML = `
+                    <div class="list-card__header">
+                        <h3>#${item.top_rank} ${item.title}</h3>
+                        <span class="badge">${item.content_type}</span>
+                    </div>
+                    <p class="list-card__text">${item.comment}</p>
+                    <div class="list-card__actions">
+                        <button class="button button--ghost" onclick="updateRank(${item.id}, ${item.top_rank})">Update Rank</button>
+                        <button class="button button--danger" onclick="removeFromTop(${item.id})">Remove from List</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateRank(id, currentRank) {
+            const newRank = prompt('New Rank:', currentRank);
+            if (!newRank) return;
+            
+            fetch(`/api/top`, { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(all => {
+                    const item = all.find(i => i.id === id);
+                    if (item) {
+                        const payload = { ...item, top_rank: Number(newRank) };
+                        saveItem(id, payload);
+                    }
+                });
+        }
+
+        function removeFromTop(id) {
+            if (!confirm('Remove from Top 25? (Item will remain in Watched list)')) return;
+
+            fetch(`/api/top`, { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(all => {
+                    const item = all.find(i => i.id === id);
+                    if (item) {
+                        const payload = { ...item, top_rank: null };
+                        saveItem(id, payload);
+                    }
+                });
+        }
+
+        function saveItem(id, payload) {
+            fetch(`/api/watched/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            })
+            .then(r => {
+                if(r.ok) renderLists();
+                else alert('Failed to update');
+            });
+        }
+
+        renderLists();
+    </script>
+</body>
+</html>

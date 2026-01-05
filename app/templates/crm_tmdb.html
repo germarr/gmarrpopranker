@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMDB CRM - Movie Ranker</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .debug-panel {
+            background: #f0f0f0;
+            border: 2px solid #333;
+            padding: 20px;
+            margin: 20px;
+            font-family: monospace;
+        }
+        .debug-log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .tmdb-search-panel {
+            border: 2px solid #007bff;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+        }
+        .tmdb-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .tmdb-result {
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        .tmdb-result:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.2);
+        }
+        .tmdb-result img {
+            width: 100%;
+            display: block;
+        }
+        .tmdb-result__info {
+            padding: 10px;
+        }
+        .tmdb-result__title {
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+        .tmdb-result__meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .tmdb-preview {
+            border: 2px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            background: #e8f5e9;
+            display: none;
+        }
+        .tmdb-preview.active {
+            display: block;
+        }
+        .tmdb-preview__header {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .tmdb-preview__poster {
+            width: 150px;
+            flex-shrink: 0;
+        }
+        .tmdb-preview__poster img {
+            width: 100%;
+        }
+        .tmdb-preview__details h3 {
+            margin: 0 0 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <nav class="navbar">
+            <a href="/" class="navbar__logo">Movie Ranker</a>
+            <div class="navbar__links">
+                <a href="/" class="navbar__link">Home</a>
+                <a href="/blog" class="navbar__link">Blog</a>
+                <a href="/top" class="navbar__link">Top 25</a>
+                <a href="/crm" class="navbar__link">CRM</a>
+            </div>
+        </nav>
+        <header class="hero hero--compact">
+            <p class="hero__eyebrow">TMDB Integration</p>
+            <h1 class="hero__title">TMDB CRM</h1>
+            <p class="hero__subtitle">Search TMDB and add movies with metadata</p>
+        </header>
+
+        <div class="debug-panel">
+            <h2>🔍 Debug Console</h2>
+            <div id="debug-log" class="debug-log">Waiting for JavaScript to load...</div>
+        </div>
+
+        <main>
+            <section class="tmdb-search-panel">
+                <h2>🔍 Search TMDB</h2>
+                <p>Search for a movie or TV show to auto-fill metadata</p>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <input type="text" id="tmdb-query" placeholder="e.g., The Matrix" style="flex: 1; padding: 10px;">
+                    <button id="tmdb-search-btn" class="button">Search TMDB</button>
+                </div>
+                <div id="tmdb-results" class="tmdb-results"></div>
+                <div id="tmdb-preview" class="tmdb-preview">
+                    <h3>✅ Selected:</h3>
+                    <div class="tmdb-preview__header">
+                        <div class="tmdb-preview__poster">
+                            <img id="preview-poster" src="" alt="">
+                        </div>
+                        <div class="tmdb-preview__details">
+                            <h3 id="preview-title"></h3>
+                            <p id="preview-meta"></p>
+                            <p id="preview-synopsis"></p>
+                        </div>
+                    </div>
+                    <button id="add-to-watched-btn" class="button" style="margin-right: 10px;">Add to Watched</button>
+                    <button id="add-to-top-btn" class="button" style="margin-right: 10px; background-color: #ffd700; color: #333;">Add to Top 25</button>
+                    <button id="add-to-planned-btn" class="button button--ghost">Add to Want to Watch</button>
+                </div>
+            </section>
+
+            <section class="panel" style="margin: 20px;">
+                <div class="panel__header">
+                    <h2>Recent Additions</h2>
+                    <p>Items you've added via TMDB</p>
+                </div>
+                <div id="recent-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+                    Loading...
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+    <script>
+        // Debug logging
+        function log(message) {
+            const debugLog = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.innerHTML += `\n[${timestamp}] ${message}`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(message);
+        }
+
+        log('🚀 TMDB CRM JavaScript started loading...');
+
+        // DOM elements
+        const tmdbQuery = document.getElementById('tmdb-query');
+        const tmdbSearchBtn = document.getElementById('tmdb-search-btn');
+        const tmdbResults = document.getElementById('tmdb-results');
+        const tmdbPreview = document.getElementById('tmdb-preview');
+        const previewPoster = document.getElementById('preview-poster');
+        const previewTitle = document.getElementById('preview-title');
+        const previewMeta = document.getElementById('preview-meta');
+        const previewSynopsis = document.getElementById('preview-synopsis');
+        const addToWatchedBtn = document.getElementById('add-to-watched-btn');
+        const addToTopBtn = document.getElementById('add-to-top-btn');
+        const addToPlannedBtn = document.getElementById('add-to-planned-btn');
+        const recentList = document.getElementById('recent-list');
+
+        log('✓ All DOM elements found');
+
+        // Store selected movie data
+        let selectedMovie = null;
+
+        // Search TMDB
+        function searchTMDB() {
+            const query = tmdbQuery.value.trim();
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+
+            log(`🔍 Searching TMDB for: "${query}"`);
+            tmdbResults.innerHTML = '<p>Searching...</p>';
+
+            fetch(`/api/tmdb/search?query=${encodeURIComponent(query)}`, {
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                log(`   Response: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+                return response.json();
+            })
+            .then(results => {
+                log(`   ✓ Found ${results.length} results`);
+                displayResults(results);
+            })
+            .catch(error => {
+                log(`   ❌ Error: ${error.message}`);
+                tmdbResults.innerHTML = `<p style="color: red;">Search failed: ${error.message}</p>`;
+            });
+        }
+
+        // Display search results
+        function displayResults(results) {
+            tmdbResults.innerHTML = '';
+            if (results.length === 0) {
+                tmdbResults.innerHTML = '<p>No results found. Try another search.</p>';
+                return;
+            }
+
+            results.forEach((result, index) => {
+                const div = document.createElement('div');
+                div.className = 'tmdb-result';
+                div.innerHTML = `
+                    ${result.poster_url ?
+                        `<img src="${result.poster_url}" alt="${result.title}">` :
+                        `<div style="background: #ddd; height: 300px; display: flex; align-items: center; justify-content: center;">No Poster</div>`
+                    }
+                    <div class="tmdb-result__info">
+                        <p class="tmdb-result__title">${result.title}</p>
+                        <p class="tmdb-result__meta">${result.media_type === 'movie' ? 'Movie' : 'TV Series'}${result.year ? ` (${result.year})` : ''}</p>
+                    </div>
+                `;
+                div.addEventListener('click', () => {
+                    log(`📝 Selected: ${result.title}`);
+                    selectMovie(result);
+                });
+                tmdbResults.appendChild(div);
+            });
+        }
+
+        // Select a movie and fetch full details
+        function selectMovie(result) {
+            log(`🎬 Fetching full details for: ${result.title} (${result.media_type}/${result.id})`);
+
+            fetch(`/api/tmdb/details/${result.media_type}/${result.id}`, {
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                log(`   Response: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch details');
+                }
+                return response.json();
+            })
+            .then(details => {
+                log(`   ✓ Details loaded`);
+                selectedMovie = details;
+                showPreview(details);
+            })
+            .catch(error => {
+                log(`   ❌ Error: ${error.message}`);
+                alert('Error loading details: ' + error.message);
+            });
+        }
+
+        // Show preview of selected movie
+        function showPreview(details) {
+            tmdbPreview.classList.add('active');
+
+            if (details.poster_url) {
+                previewPoster.src = details.poster_url;
+                previewPoster.alt = details.title;
+            }
+
+            previewTitle.textContent = details.title;
+
+            const metaParts = [];
+            if (details.content_type) metaParts.push(details.content_type);
+            if (details.release_year) metaParts.push(details.release_year);
+            if (details.runtime) metaParts.push(`${details.runtime} min`);
+            if (details.genres) metaParts.push(details.genres);
+            if (details.tmdb_rating) metaParts.push(`⭐ ${details.tmdb_rating.toFixed(1)}`);
+            previewMeta.textContent = metaParts.join(' • ');
+
+            previewSynopsis.textContent = details.synopsis || 'No synopsis available.';
+
+            log('✓ Preview displayed');
+        }
+
+        // Add to watched
+        addToWatchedBtn.addEventListener('click', function() {
+            if (!selectedMovie) {
+                alert('Please select a movie first');
+                return;
+            }
+
+            const score = prompt('Score (0-10):', '8');
+            if (!score) return;
+
+            const comment = prompt('Comment:', 'Great movie!');
+            if (!comment) return;
+
+            const watchDate = prompt('Watch date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+            if (!watchDate) return;
+
+            log(`➕ Adding to watched: ${selectedMovie.title}`);
+
+            const formData = new FormData();
+            formData.append('title', selectedMovie.title);
+            formData.append('score', score);
+            formData.append('comment', comment);
+            formData.append('watch_date', watchDate);
+            formData.append('content_type', selectedMovie.content_type);
+            formData.append('image_url', selectedMovie.poster_url || '');
+            formData.append('synopsis', selectedMovie.synopsis || '');
+            formData.append('release_year', selectedMovie.release_year || '');
+            formData.append('release_date', selectedMovie.release_date || '');
+            formData.append('runtime', selectedMovie.runtime || '');
+            formData.append('genres', selectedMovie.genres || '');
+            formData.append('tmdb_id', selectedMovie.tmdb_id || '');
+            formData.append('tmdb_rating', selectedMovie.tmdb_rating || '');
+            formData.append('poster_url', selectedMovie.poster_url || '');
+
+            fetch('/api/watched', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                log(`   Response: ${response.status}`);
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.detail || 'Failed to add');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                log(`   ✅ Added to watched! ID: ${data.id}`);
+                alert(`✅ Added "${selectedMovie.title}" to watched!`);
+                tmdbPreview.classList.remove('active');
+                selectedMovie = null;
+                tmdbQuery.value = '';
+                tmdbResults.innerHTML = '';
+                loadRecent();
+            })
+            .catch(error => {
+                log(`   ❌ Error: ${error.message}`);
+                alert('Error: ' + error.message);
+            });
+        });
+
+        // Add to want to watch
+        addToPlannedBtn.addEventListener('click', function() {
+            if (!selectedMovie) {
+                alert('Please select a movie first');
+                return;
+            }
+
+            const excitement = prompt('Excitement (1-10):', '7');
+            if (!excitement) return;
+
+            const launchDate = prompt('Launch date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+            if (!launchDate) return;
+
+            log(`➕ Adding to want-to-watch: ${selectedMovie.title}`);
+
+            const formData = new FormData();
+            formData.append('title', selectedMovie.title);
+            formData.append('excitement', excitement);
+            formData.append('launch_date', launchDate);
+            formData.append('content_type', selectedMovie.content_type);
+            formData.append('image_url', selectedMovie.poster_url || '');
+            formData.append('synopsis', selectedMovie.synopsis || '');
+            formData.append('release_year', selectedMovie.release_year || '');
+            formData.append('runtime', selectedMovie.runtime || '');
+            formData.append('genres', selectedMovie.genres || '');
+            formData.append('tmdb_id', selectedMovie.tmdb_id || '');
+            formData.append('tmdb_rating', selectedMovie.tmdb_rating || '');
+            formData.append('poster_url', selectedMovie.poster_url || '');
+
+            fetch('/api/want-to-watch', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                log(`   Response: ${response.status}`);
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.detail || 'Failed to add');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                log(`   ✅ Added to want-to-watch! ID: ${data.id}`);
+                alert(`✅ Added "${selectedMovie.title}" to want-to-watch!`);
+                tmdbPreview.classList.remove('active');
+                selectedMovie = null;
+                tmdbQuery.value = '';
+                tmdbResults.innerHTML = '';
+                loadRecent();
+            })
+            .catch(error => {
+                log(`   ❌ Error: ${error.message}`);
+                alert('Error: ' + error.message);
+            });
+        });
+
+        // Add to Top 25
+        addToTopBtn.addEventListener('click', function() {
+            if (!selectedMovie) {
+                alert('Please select a movie first');
+                return;
+            }
+
+            const rank = prompt('Top 25 Rank (1-25):', '1');
+            if (!rank) return;
+
+            const score = prompt('Score (0-10):', '10');
+            if (!score) return;
+
+            const comment = prompt('Comment:', 'Masterpiece!');
+            if (!comment) return;
+
+            const watchDate = prompt('Watch date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+            if (!watchDate) return;
+
+            log(`➕ Adding to Top 25: ${selectedMovie.title} at rank ${rank}`);
+
+            const formData = new FormData();
+            formData.append('title', selectedMovie.title);
+            formData.append('score', score);
+            formData.append('comment', comment);
+            formData.append('watch_date', watchDate);
+            formData.append('content_type', selectedMovie.content_type);
+            formData.append('image_url', selectedMovie.poster_url || '');
+            formData.append('synopsis', selectedMovie.synopsis || '');
+            formData.append('release_year', selectedMovie.release_year || '');
+            formData.append('release_date', selectedMovie.release_date || '');
+            formData.append('runtime', selectedMovie.runtime || '');
+            formData.append('genres', selectedMovie.genres || '');
+            formData.append('tmdb_id', selectedMovie.tmdb_id || '');
+            formData.append('tmdb_rating', selectedMovie.tmdb_rating || '');
+            formData.append('poster_url', selectedMovie.poster_url || '');
+            formData.append('top_rank', rank);
+
+            fetch('/api/watched', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                log(`   Response: ${response.status}`);
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.detail || 'Failed to add');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                log(`   ✅ Added to Top 25! ID: ${data.id}`);
+                alert(`✅ Added "${selectedMovie.title}" to Top 25 (Rank #${rank})!`);
+                tmdbPreview.classList.remove('active');
+                selectedMovie = null;
+                tmdbQuery.value = '';
+                tmdbResults.innerHTML = '';
+                loadRecent();
+            })
+            .catch(error => {
+                log(`   ❌ Error: ${error.message}`);
+                alert('Error: ' + error.message);
+            });
+        });
+
+        // Load recent additions
+        function loadRecent() {
+            log('📋 Loading recent additions...');
+
+            Promise.all([
+                fetch('/api/watched', { credentials: 'same-origin' }).then(r => r.json()),
+                fetch('/api/want-to-watch', { credentials: 'same-origin' }).then(r => r.json())
+            ])
+            .then(([watched, planned]) => {
+                log(`   Watched: ${watched.length}, Planned: ${planned.length}`);
+
+                const recent = [...watched.slice(0, 3), ...planned.slice(0, 3)]
+                    .sort((a, b) => {
+                        const dateA = new Date(a.watch_date || a.launch_date);
+                        const dateB = new Date(b.watch_date || b.launch_date);
+                        return dateB - dateA;
+                    })
+                    .slice(0, 6);
+
+                recentList.innerHTML = '';
+                if (recent.length === 0) {
+                    recentList.innerHTML = '<div class="empty-state">No items yet. Search and add above!</div>';
+                } else {
+                    recent.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'list-card';
+                        div.innerHTML = `
+                            <div class="list-card__header">
+                                <h3>${item.title}</h3>
+                                ${item.score ? `<span class="score">${item.score}/10</span>` : `<span class="badge">Planned</span>`}
+                            </div>
+                            <p class="list-card__text">${item.comment || 'Excitement ' + item.excitement + '/10'}</p>
+                            <p class="list-card__meta">${item.content_type}${item.genres ? ' • ' + item.genres : ''}</p>
+                        `;
+                        recentList.appendChild(div);
+                    });
+                }
+                log('   ✓ Recent list rendered');
+            })
+            .catch(error => {
+                log(`   ❌ Error: ${error.message}`);
+                recentList.innerHTML = '<div class="empty-state">Error loading items</div>';
+            });
+        }
+
+        // Event listeners
+        tmdbSearchBtn.addEventListener('click', searchTMDB);
+        tmdbQuery.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchTMDB();
+            }
+        });
+
+        log('✓ Event listeners attached');
+
+        // Initial load
+        loadRecent();
+
+        log('═══════════════════════════════════════════════');
+        log('✅ TMDB CRM LOADED SUCCESSFULLY!');
+        log('═══════════════════════════════════════════════');
+    </script>
+</body>
+</html>

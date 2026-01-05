@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Ranker</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page">
+        <nav class="navbar">
+            <a href="/" class="navbar__logo">Movie Ranker</a>
+            <div class="navbar__links">
+                <a href="/" class="navbar__link">Home</a>
+                <a href="/blog" class="navbar__link">Blog</a>
+                <a href="/top" class="navbar__link">Top 25</a>
+                <a href="/crm" class="navbar__link">CRM</a>
+            </div>
+        </nav>
+        <header class="hero">
+            <p class="hero__eyebrow">Pop Culture Ranker</p>
+            <h1 class="hero__title">Movie Ranker</h1>
+            <p class="hero__subtitle">A calm, chronological diary of what I have watched and what is next.</p>
+            <div class="hero__stats">
+                <div class="stat">
+                    <span class="stat__value">{{ watched_list|length }}</span>
+                    <span class="stat__label">Watched</span>
+                </div>
+                <div class="stat">
+                    <span class="stat__value">{{ want_to_watch_list|length }}</span>
+                    <span class="stat__label">Queue</span>
+                </div>
+            </div>
+            <div class="hero__links">
+                <a class="text-link" href="/blog">Read the blog</a>
+            </div>
+        </header>
+
+        <main class="timeline-grid">
+            <section class="timeline-column">
+                <div class="timeline-header">
+                    <h2>Watched</h2>
+                    <p>Personal notes and scores.</p>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-pill">
+                        <span class="summary-label">Total</span>
+                        <span class="summary-value">{{ watched_count }}</span>
+                    </div>
+                    <div class="summary-pill">
+                        <span class="summary-label">Avg Score</span>
+                        <span class="summary-value">{{ watched_avg_score }}</span>
+                    </div>
+                </div>
+                <div class="timeline">
+                    {% for item in watched_list %}
+                    <article class="timeline-item watched" style="--i: {{ loop.index0 }};">
+                        <div class="card">
+                            <div class="card__image">
+                                <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+                            </div>
+                            <div class="card__body">
+                                <div class="card__title-row">
+                                    <h3>{{ item.title }}</h3>
+                                    <div class="card__tags">
+                                        <span class="tag tag--watched">Watched · {{ item.score }}/10</span>
+                                        {% if item.content_type == "TV Series" and item.season %}
+                                        <span class="mini-badge">S{{ item.season }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <p class="card__date">
+                                    {{ item.content_type }}{% if item.content_type == "TV Series" and item.season %} · Season {{ item.season }}{% endif %} · Watched: {{ item.watch_date }}
+                                </p>
+                                {% if item.release_year or item.runtime or item.genres or item.tmdb_rating %}
+                                <p class="card__meta">
+                                    {% if item.release_year %}<span>{{ item.release_year }}</span>{% endif %}
+                                    {% if item.runtime %}<span>{{ item.runtime }} min</span>{% endif %}
+                                    {% if item.genres %}<span>{{ item.genres }}</span>{% endif %}
+                                    {% if item.tmdb_rating %}<span>TMDB {{ "%.1f"|format(item.tmdb_rating) }}</span>{% endif %}
+                                </p>
+                                {% endif %}
+                                {% if item.synopsis %}
+                                <p class="card__synopsis">{{ item.synopsis }}</p>
+                                {% endif %}
+                                <p class="card__text">{{ item.comment }}</p>
+                                {% if item.blog_slug %}
+                                <div class="card__actions">
+                                    <a class="text-link" href="/blog/{{ item.blog_slug }}">Read blog entry</a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="timeline-column is-future">
+                <div class="timeline-header">
+                    <h2>Want to Watch</h2>
+                    <p>Upcoming releases and reminders.</p>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-pill">
+                        <span class="summary-label">Total</span>
+                        <span class="summary-value">{{ planned_count }}</span>
+                    </div>
+                    <div class="summary-pill">
+                        <span class="summary-label">Avg Excitement</span>
+                        <span class="summary-value">{{ planned_avg_excitement }}</span>
+                    </div>
+                </div>
+                <div class="timeline">
+                    {% for item in want_to_watch_list %}
+                    <article class="timeline-item planned" style="--i: {{ loop.index0 }};">
+                        <div class="card">
+                            <div class="card__image">
+                                <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+                            </div>
+                            <div class="card__body">
+                                <div class="card__title-row">
+                                    <h3>{{ item.title }}</h3>
+                                    <div class="card__tags">
+                                        <span class="tag tag--planned">Planned · {{ item.excitement }}/10</span>
+                                        {% if item.content_type == "TV Series" and item.season %}
+                                        <span class="mini-badge">S{{ item.season }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <p class="card__date">
+                                    {{ item.content_type }}{% if item.content_type == "TV Series" and item.season %} · Season {{ item.season }}{% endif %} · Launch: {{ item.launch_date }}
+                                </p>
+                                {% if item.release_year or item.runtime or item.genres or item.tmdb_rating %}
+                                <p class="card__meta">
+                                    {% if item.release_year %}<span>{{ item.release_year }}</span>{% endif %}
+                                    {% if item.runtime %}<span>{{ item.runtime }} min</span>{% endif %}
+                                    {% if item.genres %}<span>{{ item.genres }}</span>{% endif %}
+                                    {% if item.tmdb_rating %}<span>TMDB {{ "%.1f"|format(item.tmdb_rating) }}</span>{% endif %}
+                                </p>
+                                {% endif %}
+                                {% if item.synopsis %}
+                                <p class="card__synopsis">{{ item.synopsis }}</p>
+                                {% endif %}
+                                <p class="card__text">Anticipation level {{ item.excitement }}/10.</p>
+                            </div>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
