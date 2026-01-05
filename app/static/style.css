@@ -1172,8 +1172,8 @@ img {
     background-image: var(--poster-image, none);
     background-size: cover;
     background-position: center;
-    filter: blur(28px) saturate(150%);
-    opacity: 0.32;
+    filter: blur(28px) saturate(180%);
+    opacity: 0.6;
     transform: scale(1.1);
     z-index: 0;
 }
@@ -1182,7 +1182,7 @@ img {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(165deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.72));
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.45));
     z-index: 1;
 }
 
