@@ -26,36 +26,41 @@
             <p class="hero__subtitle">My absolute favorite movies and series.</p>
         </header>
 
-        <main class="top-container">
+        <main class="top-container top-container--columns">
             <section class="top-row">
                 <div class="top-row__header">
                     <h2>Top 25 Movies</h2>
                     <p>The best films I've seen.</p>
                 </div>
-                <div class="top-row__scroll">
-                    {% for item in top_movies %}
-                    <article class="top-card top-card--glass top-card--split" style="--poster-image: url('{{ item.image_url }}');">
-                        <div class="top-card__image">
-                            <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+                <div class="top-row__scroll top-row__scroll--vertical">
+                    <div class="timeline">
+                        {% for item in top_movies %}
+                        {% set poster_image = item.image_url | default('', true) %}
+                        <div class="timeline-item">
+                            <article class="top-card top-card--panel top-card--glass" style="--poster-image: url('{{ poster_image }}');">
+                                <div class="top-card__image">
+                                    <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+                                </div>
+                                <div class="top-card__body">
+                                    <div class="top-card__rank">#{{ item.top_rank }}</div>
+                                    <h3 class="top-card__title">{{ item.title }}</h3>
+                                    <p class="top-card__meta">
+                                        {{ item.content_type }} · {{ item.release_date or item.release_year }}
+                                    </p>
+                                    {% if item.synopsis %}
+                                    <p class="top-card__synopsis">{{ item.synopsis }}</p>
+                                    {% endif %}
+                                    <p class="top-card__comment">{{ item.comment }}</p>
+                                    {% if item.blog_slug %}
+                                    <div class="top-card__actions">
+                                        <a class="text-link" href="/blog/{{ item.blog_slug }}">Read blog entry</a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </article>
                         </div>
-                        <div class="top-card__body">
-                            <div class="top-card__rank">#{{ item.top_rank }}</div>
-                            <h3 class="top-card__title">{{ item.title }}</h3>
-                            <p class="top-card__meta">
-                                {{ item.content_type }} · {{ item.release_date or item.release_year }}
-                            </p>
-                            {% if item.synopsis %}
-                            <p class="top-card__synopsis">{{ item.synopsis }}</p>
-                            {% endif %}
-                            <p class="top-card__comment">{{ item.comment }}</p>
-                            {% if item.blog_slug %}
-                            <div class="top-card__actions">
-                                <a class="text-link" href="/blog/{{ item.blog_slug }}">Read blog entry</a>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </article>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
                 </div>
             </section>
 
@@ -64,31 +69,36 @@
                     <h2>Top 25 Series</h2>
                     <p>The best shows I've seen.</p>
                 </div>
-                <div class="top-row__scroll">
-                    {% for item in top_series %}
-                    <article class="top-card top-card--glass top-card--split" style="--poster-image: url('{{ item.image_url }}');">
-                        <div class="top-card__image">
-                            <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+                <div class="top-row__scroll top-row__scroll--vertical">
+                    <div class="timeline">
+                        {% for item in top_series %}
+                        {% set poster_image = item.image_url | default('', true) %}
+                        <div class="timeline-item">
+                            <article class="top-card top-card--panel top-card--glass" style="--poster-image: url('{{ poster_image }}');">
+                                <div class="top-card__image">
+                                    <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+                                </div>
+                                <div class="top-card__body">
+                                    <div class="top-card__rank">#{{ item.top_rank }}</div>
+                                    <h3 class="top-card__title">{{ item.title }}</h3>
+                                    <p class="top-card__meta">
+                                        {{ item.content_type }} · {{ item.release_date or item.release_year }}
+                                        {% if item.season %} · S{{ item.season }}{% endif %}
+                                    </p>
+                                    {% if item.synopsis %}
+                                    <p class="top-card__synopsis">{{ item.synopsis }}</p>
+                                    {% endif %}
+                                    <p class="top-card__comment">{{ item.comment }}</p>
+                                    {% if item.blog_slug %}
+                                    <div class="top-card__actions">
+                                        <a class="text-link" href="/blog/{{ item.blog_slug }}">Read blog entry</a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </article>
                         </div>
-                        <div class="top-card__body">
-                            <div class="top-card__rank">#{{ item.top_rank }}</div>
-                            <h3 class="top-card__title">{{ item.title }}</h3>
-                            <p class="top-card__meta">
-                                {{ item.content_type }} · {{ item.release_date or item.release_year }}
-                                {% if item.season %} · S{{ item.season }}{% endif %}
-                            </p>
-                            {% if item.synopsis %}
-                            <p class="top-card__synopsis">{{ item.synopsis }}</p>
-                            {% endif %}
-                            <p class="top-card__comment">{{ item.comment }}</p>
-                            {% if item.blog_slug %}
-                            <div class="top-card__actions">
-                                <a class="text-link" href="/blog/{{ item.blog_slug }}">Read blog entry</a>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </article>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
                 </div>
             </section>
         </main>
